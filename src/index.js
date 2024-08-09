@@ -20,6 +20,7 @@ const appExpress = express();
 const server = http.createServer(appExpress); 
 const io = socketIO(server); 
 const PORT = 3000;
+const cors = require('cors'); 
 const { verificarTokenPersonalizado } = require('./VerificarToken');
 const { generarTokenPersonalizado, generarPalabrasClave } = require('./GeneracionToken');
 
@@ -40,10 +41,23 @@ const storage = multer.diskStorage({
   }
 });
 
+// Configura CORS para permitir solicitudes desde http://localhost:8100
+//appExpress.use(cors({
+  //origin: 'http://localhost:8100'
+//}));
+
+// Si deseas permitir solicitudes desde cualquier origen, puedes usar:
+appExpress.use(cors());
+
+
 const upload = multer({ storage: storage });
 
 // Coneccion a MongoDB para loginApp
-mongoose.connect('mongodb://localhost:27017/loginApp', { useNewUrlParser: true, useUnifiedTopology: true })
+//mongoose.connect('mongodb://localhost:27017/loginApp', { useNewUrlParser: true, useUnifiedTopology: true })
+  //.then(() => console.log('Conectado a MongoDB para loginApp'))
+//  .catch(err => console.error('Error al conectar a MongoDB:', err));
+
+mongoose.connect('mongodb+srv://antoniotaboada777:0ZJ1alGXsIqPOzln@cluster0.kxioi.mongodb.net/loginApp?retryWrites=true&w=majority&appName=Cluster0', { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('Conectado a MongoDB para loginApp'))
   .catch(err => console.error('Error al conectar a MongoDB:', err));
 
@@ -720,14 +734,15 @@ appExpress.post('/loginEstudiante', async (req, res) => {
 
   try {
     const estudiante = await Estudiante.findOne({ email, telefono });
+
     if (!estudiante) {
       return res.status(401).json({ message: 'Credenciales incorrectas' });
     }
-    const token = jwt.sign({ id: estudiante._id, email: estudiante.email }, secretKey, { expiresIn: '1h' });
-    res.json({ message: 'Autenticación exitosa', token });
-  } catch (error) {
-    console.error('Error durante la autenticación:', error);
-    res.status(500).send('Error interno del servidor');
+    res.json({ message: 'Autenticación exitosa' });
+
+  } catch (dbError) {
+    console.error('Error al acceder a la base de datos:', dbError);
+    res.status(500).json({ message: 'Error interno del servidor' });
   }
 });
 
