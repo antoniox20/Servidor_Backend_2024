@@ -41,12 +41,8 @@ const storage = multer.diskStorage({
   }
 });
 
-// Configura CORS para permitir solicitudes desde http://localhost:8100
-//appExpress.use(cors({
-  //origin: 'http://localhost:8100'
-//}));
 
-// Si deseas permitir solicitudes desde cualquier origen, puedes usar:
+// permitir solicitudes desde cualquier origen, puedes usar:
 appExpress.use(cors());
 
 

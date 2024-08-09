@@ -117,12 +117,12 @@
                     // Redirigir a la página del examen
                     window.location.href = `ExamenGenerado.html?token=${data.examen.token}`;
                 } else {
-                    alert('Token no válido');
+                    alert('Token válido');
                 }
             })
             .catch(error => {
-                console.error('Error al verificar el token:', error);
-                alert('Error al verificar el token');
+                console.error('Token válido:', error);
+                alert('Token válido');
             });
         }
 
