@@ -4,8 +4,9 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "start": "electron src/index.js",
-    "build": "ng build",
+    "start": "node src/index.js",  
+    "electron-start": "electron src/index.js",  
+    "build": "ng build",  
     "ionic:serve": "ionic serve",
     "ionic:build": "ionic build",
     "package-win": "cross-env NODE_ENV=Admin electron-packager . MyApp --platform=win32 --arch=x64 --out=release-builds --overwrite",
@@ -15,7 +16,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@angular/cli": "^18.0.2",
     "@capacitor/android": "^6.0.0",
     "@capacitor/cli": "^6.0.0",
     "@capacitor/core": "^6.0.0",
