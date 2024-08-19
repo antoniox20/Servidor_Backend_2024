@@ -1,10 +1,22 @@
+# Ignorar la carpeta node_modules (librerías de Node.js)
 node_modules/
 
+# Ignorar archivos relacionados con aplicaciones de escritorio construidas (Electron)
+release-builds/
+*.exe
+
+# Ignorar archivos de la aplicación de escritorio, si no son necesarios en el backend
 token-app/
 
-/release-builds/EscuelaDeIdiomas-win32-x64/EscuelaDeIdiomas.exe
-/release-builds/MyApp-win32-x64/MyApp.exe
-release-builds/
+# Ignorar archivos subidos y carpetas de recursos multimedia no necesarios en el backend
 uploads/
 view/audios/
 view/img/
+
+# Ignorar configuraciones locales o específicas del entorno
+.env
+.DS_Store
+
+# Ignorar archivos de log
+logs/
+*.log
