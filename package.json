@@ -5,9 +5,10 @@
   "main": "src/index.js",
   "scripts": {
     "start": "electron src/index.js",
+    "build": "ng build",
     "ionic:serve": "ionic serve",
     "ionic:build": "ionic build",
-    "package-win": "cross-env NODE_ENV=Admin electron-packager . MyApp --platform=win32 --arch=x64 --out=release-builds --overwrite",
+    "package-win": "cross-env NODE_ENV=Admin electron-packager . EscuelaDeIdiomas --platform=win32 --arch=x64 --icon=./src/view/img/favicon.ico --out=release-builds --overwrite",
     "test": "jest"
   },
   "keywords": [],
@@ -21,6 +22,7 @@
     "@ionic/angular": "^8.2.0",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
+    "clicksend": "^5.0.79",
     "cors": "^2.8.5",
     "electron": "^30.0.3",
     "electron-menu": "^1.0.0",

@@ -1,0 +1,134 @@
+body {
+    background: linear-gradient(to right, #f5f7fa, #c3cfe2);
+    font-family: 'Arial', sans-serif;
+    color: #333;
+}
+
+.navbar {
+    background: #343a40;
+}
+
+.navbar-brand {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+}
+
+.escudo {
+    width: 60px; 
+    height: 60px; 
+    margin-left: 10px;
+}
+
+#examenInfo {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+    font-size: 1.1em;
+    border-left: 5px solid #007bff;
+    margin-bottom: 20px;
+    position: -webkit-sticky; /* Safari */
+    position: sticky;
+    top: 0;
+    z-index: 1000; /* Asegura que el cronómetro esté por encima de otros elementos */
+}
+
+.token-display {
+    word-break: break-word;
+    color: #007bff;
+    font-weight: bold;
+}
+
+.pregunta-card {
+    background-color: #ffffff;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    border-left: 5px solid #007bff;
+}
+
+.input-group-prepend .input-group-text {
+    background-color: #007bff;
+    color: #ffffff;
+    border: none;
+    font-size: 1.2em;
+}
+
+.input-group-text {
+    width: 45px;
+    text-align: center;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    font-size: 1.1em;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-primary ion-icon {
+    margin-right: 5px;
+}
+
+.alert {
+    font-size: 1.2em;
+    display: flex;
+    align-items: center;
+}
+
+.alert ion-icon {
+    margin-right: 10px;
+    font-size: 1.5em;
+}
+
+.container {
+    max-width: 800px;
+}
+
+#cronometro {
+    font-weight: bold;
+    color: #dc3545;
+}
+
+#detallesResultado {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    margin-top: 20px;
+    text-align: left;
+}
+
+.pregunta-card h5 {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+}
+
+.pregunta-card ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.pregunta-card li {
+    margin-bottom: 10px;
+}
+
+.pregunta-card audio {
+    margin-top: 10px;
+    width: 100%;
+}
+
+.pregunta-card .form-check-label {
+    font-size: 1.1em;
+    margin-left: 10px;
+}

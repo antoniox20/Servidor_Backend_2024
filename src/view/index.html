@@ -21,26 +21,43 @@
             </nav>
         </div>
     </header>
+
+    <!-- Menú Desplegable -->
+    <div class="sidebar">
+        <button class="sidebar-toggle"><i class="fas fa-bars"></i></button>
+        <nav class="sidebar-menu">
+            <a href="usuarios.html"><i class="fas fa-user"></i> Estudiantes</a>
+            <a href="Examenes.html"><i class="fas fa-file-alt"></i> Exámenes</a>
+            <a href="AsignacionExamen.html"><i class="fas fa-tasks"></i> Asignación de Examen</a>
+            <a href="configuracion.html"><i class="fas fa-cogs"></i> Configuración</a>
+            <a href="preguntas.html"><i class="fas fa-question-circle"></i> Preguntas</a>
+            <a href="Notas.html"><i class="fas fa-clipboard"></i> Notas</a>
+            <a href="Seguimiento.html"><i class="fas fa-eye"></i> Ver Seguimiento</a>
+        </nav>
+    </div>
+
     <div class="capa"></div>
     <div id="informacion" class="d-none"></div>
-    <div class="button-container">
-        <button class="menu-button" onclick="location.href='usuarios.html'"><i class="fas fa-user"></i> Estudiantes</button>
-        <button class="menu-button" onclick="location.href='Examenes.html'"><i class="fas fa-file-alt"></i> Exámenes</button>
-        <button class="menu-button" onclick="location.href='configuracion.html'"><i class="fas fa-cogs"></i> Configuración</button>
-        <button class="menu-button" onclick="location.href='preguntas.html'"><i class="fas fa-question-circle"></i> Preguntas</button>
-        <button class="menu-button" onclick="location.href='Notas.html'"><i class="fas fa-clipboard"></i> Notas</button>
-    </div>
+
     <button class="logout-button" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Salir</button>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.querySelector('.sidebar-toggle');
+            const sidebarMenu = document.querySelector('.sidebar-menu');
+            const sidebar = document.querySelector('.sidebar');
+
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+            });
+
             var enlacesMenu = document.querySelectorAll('.menu a');
             var divInformacion = document.getElementById('informacion');
 
             enlacesMenu.forEach(function(enlace) {
                 enlace.addEventListener('click', function(event) {
                     if (enlace.id === 'red-social-link') {
-                        return;  
+                        return;
                     }
                     event.preventDefault();
                     var textoEnlace = enlace.textContent.trim();
@@ -67,30 +84,32 @@
                                 </div>`;
                             break;
                         case 'Nosotros':
-                            divInformacion.innerHTML = '<h2><i class="fas fa-bullseye"></i> Misión</h2><p>LA ESCUELA DE IDIOMAS DEL EJÉRCITO, PLANIFICARÁ, COORDINARÁ Y DESARROLLARÁ EL SISTEMA DE ENSEÑANZA, APRENDIZAJE DE IDIOMAS EXTRANJEROS Y NATIVOS EN SUS DIVERSAS FILIALES Y SUCURSALES DEL TERRITORIO NACIONAL PARA CAPACITAR A LOS RECURSOS HUMANOS DEL EJÉRCITO Y PERSONAL CIVIL EN EL MANEJO DE LAS LENGUAS CON ELEVADO NIVEL DE DOMINIO, A FIN DE CONTRIBUIR AL CUMPLIMIENTO DE LA MISIÓN DEL COMANDO DE INSTITUTOS MILITARES DEL EJÉRCITO EN EL CAMPO DE LA EDUCACIÓN.</p><h2><i class="fas fa-eye"></i> Visión</h2><p>CONSTITUIR EL CENTRO LÍDER EN LA  CAPACITACIÓN DE RECURSOS HUMANOS DEL EJERCITO EN IDIOMAS EXTRANJEROS Y NATIVOS A NIVEL NACIONAL, LOGRANDO LA EXCELENCIA ACADÉMICA DEL PERSONAL MILITAR Y CIVIL EN EL SISTEMA DE ENSEÑANZA Y  APRENDIZAJE QUE PERMITA INCREMENTAR LA EFICIENCIA Y COMPETITIVIDAD EN EL DESARROLLO DE SUS FUNCIONES EN EL ÁMBITO NACIONAL  E INTERNACIONAL CON UN ALTO GRADO DE RESPONSABILIDAD, DIGNIDAD Y LIDERAZGO.</p>';
+                            divInformacion.innerHTML = `
+                                <div class="info-card">
+                                    <h2><i class="fas fa-bullseye"></i> Misión</h2>
+                                    <p>LA ESCUELA DE IDIOMAS DEL EJÉRCITO, PLANIFICARÁ, COORDINARÁ Y DESARROLLARÁ EL SISTEMA DE ENSEÑANZA, APRENDIZAJE DE IDIOMAS EXTRANJEROS Y NATIVOS EN SUS DIVERSAS FILIALES Y SUCURSALES DEL TERRITORIO NACIONAL PARA CAPACITAR A LOS RECURSOS HUMANOS DEL EJÉRCITO Y PERSONAL CIVIL EN EL MANEJO DE LAS LENGUAS CON ELEVADO NIVEL DE DOMINIO, A FIN DE CONTRIBUIR AL CUMPLIMIENTO DE LA MISIÓN DEL COMANDO DE INSTITUTOS MILITARES DEL EJÉRCITO EN EL CAMPO DE LA EDUCACIÓN.</p>
+                                    <h2><i class="fas fa-eye"></i> Visión</h2>
+                                    <p>CONSTITUIR EL CENTRO LÍDER EN LA CAPACITACIÓN DE RECURSOS HUMANOS DEL EJÉRCITO EN IDIOMAS EXTRANJEROS Y NATIVOS A NIVEL NACIONAL, LOGRANDO LA EXCELENCIA ACADÉMICA DEL PERSONAL MILITAR Y CIVIL EN EL SISTEMA DE ENSEÑANZA Y APRENDIZAJE QUE PERMITA INCREMENTAR LA EFICIENCIA Y COMPETITIVIDAD EN EL DESARROLLO DE SUS FUNCIONES EN EL ÁMBITO NACIONAL E INTERNACIONAL CON UN ALTO GRADO DE RESPONSABILIDAD, DIGNIDAD Y LIDERAZGO.</p>
+                                </div>`;
                             break;
                         case 'Horarios':
                             divInformacion.innerHTML = `
-                                <div class="horarios-container">
-                                    <div class="horario-seccion">
-                                        <h2><i class="fas fa-calendar-alt"></i> Horario y Turno Mañana:</h2>
-                                        <p><strong>Intensivo, Libro 1-24:</strong><br>07:30 hasta 12:30</p>
-                                        <p><strong>Regular, Libro 1-24:</strong><br>07:30 hasta 10:00<br>10:00 hasta 12:30</p>
-                                        <p><strong>Regular, Libro 13-24:</strong><br>07:30 hasta 10:00</p>
-                                        <p><strong>Avanzado, Libro 25-30:</strong><br>07:30 hasta 10:00</p>
-                                    </div>
-                                    <div class="horario-seccion">
-                                        <h2><i class="fas fa-calendar-alt"></i> Horario y Turno Tarde:</h2>
-                                        <p><strong>Intensivo, Libro 1-24:</strong><br>14:30 hasta 19:30</p>
-                                        <p><strong>Regular, Libro 1-24:</strong><br>17:00 hasta 19:00</p>
-                                        <p><strong>Avanzado, Libro 25-30:</strong><br>17:30 hasta 19:30</p>
-                                    </div>
-                                    <div class="horario-seccion">
-                                        <h2><i class="fas fa-calendar-alt"></i> Horario y Turno Noche:</h2>
-                                        <p><strong>Intensivo, Libro 1-24:</strong><br>18:30 hasta 21:30</p>
-                                        <p><strong>Regular, Libro 1-24:</strong><br>19:30 hasta 21:30</p>
-                                        <p><strong>Avanzado, Libro 25-30:</strong><br>19:30 hasta 21:30</p>
-                                    </div>
+                                <div class="info-card">
+                                    <h2><i class="fas fa-calendar-alt"></i> Horario y Turno Mañana:</h2>
+                                    <p><strong>Intensivo, Libro 1-24:</strong><br>07:30 hasta 12:30</p>
+                                    <p><strong>Regular, Libro 1-24:</strong><br>07:30 hasta 10:00<br>10:00 hasta 12:30</p>
+                                    <p><strong>Regular, Libro 13-24:</strong><br>07:30 hasta 10:00</p>
+                                    <p><strong>Avanzado, Libro 25-30:</strong><br>07:30 hasta 10:00</p>
+                                    <br>
+                                    <h2><i class="fas fa-calendar-alt"></i> Horario y Turno Tarde:</h2>
+                                    <p><strong>Intensivo, Libro 1-24:</strong><br>14:30 hasta 19:30</p>
+                                    <p><strong>Regular, Libro 1-24:</strong><br>17:00 hasta 19:00</p>
+                                    <p><strong>Avanzado, Libro 25-30:</strong><br>17:30 hasta 19:30</p>
+                                    <br>
+                                    <h2><i class="fas fa-calendar-alt"></i> Horario y Turno Noche:</h2>
+                                    <p><strong>Intensivo, Libro 1-24:</strong><br>18:30 hasta 21:30</p>
+                                    <p><strong>Regular, Libro 1-24:</strong><br>19:30 hasta 21:30</p>
+                                    <p><strong>Avanzado, Libro 25-30:</strong><br>19:30 hasta 21:30</p>
                                 </div>`;
                             break;
                         default:

@@ -1,0 +1,83 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    padding: 20px;
+}
+
+.container {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.table {
+    margin-top: 20px;
+    table-layout: auto;
+    width: 100%;
+}
+
+.table th, .table td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.header, .subheader {
+    background-color: #007bff;
+    color: #ffffff;
+    padding: 10px;
+    border-radius: 8px 8px 0 0;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.header h1, .subheader h2 {
+    margin: 0;
+}
+
+.print-btn {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.print-btn button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.print-btn button:hover {
+    background-color: #0056b3;
+}
+
+@media print {
+    body {
+        background-color: #ffffff;
+    }
+    .container {
+        box-shadow: none;
+    }
+    .print-btn {
+        display: none;
+    }
+}
+
+.info-icon {
+    margin-right: 5px;
+}
+
+.table thead th {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.table tbody td {
+    font-size: 14px;
+}

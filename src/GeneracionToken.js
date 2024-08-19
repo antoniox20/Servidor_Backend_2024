@@ -25,7 +25,9 @@ function generarTokenPersonalizado(palabrasClave, ttlMinutes = 60) {
     const expirationTime = new Date(now.getTime() + ttlMinutes * 60000).toISOString();
     const baseString = `${palabrasClave.join('-')}:${creationTime}:${expirationTime}:${SALT}`;
     const hash = crypto.createHash('sha256').update(baseString).digest('hex');
-    return { token: hash, creationTime, expiresAt: expirationTime, ttlMinutes, palabrasClave };
+    const bigintHash = BigInt('0x' + hash);
+    const base36Token = bigintHash.toString(36).substring(0, 5);  
+    return { token: base36Token, creationTime, expiresAt: expirationTime, ttlMinutes, palabrasClave };
 }
 
 module.exports = { generarTokenPersonalizado, generarPalabrasClave };

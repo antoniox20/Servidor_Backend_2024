@@ -6,6 +6,23 @@ body {
     padding: 0;
     background: linear-gradient(to right, #1abc9c, #254fd9);
     color: #333;
+    position: relative;
+}
+
+/* Imagen de fondo como marca de agua */
+body::before {
+    content: "";
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-20%, -30%);
+    background-image: url('../img/Escudo.jpg');
+    background-size: 43%; 
+    background-repeat: no-repeat;
+    opacity: 0.15; 
+    width: 100%;
+    height: 100%;
+    z-index: -1;
 }
 
 .header {
@@ -34,7 +51,7 @@ body {
     color: white;
     text-decoration: none;
     margin: 0 10px;
-    font-size: 16px;
+    font-size: 14px; /* Tamaño de fuente reducido */
     transition: color 0.3s ease-in-out, transform 0.3s ease-in-out;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     border-radius: 4px;
@@ -47,52 +64,99 @@ body {
     transform: scale(1.1);
 }
 
+/* Menú Desplegable en la Parte Izquierda */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 250px;
+    height: 100%;
+    background-color: #2c3e50;
+    padding: 10px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    transform: translateX(-250px);
+    transition: transform 0.3s ease-in-out;
+}
+
+.sidebar.active {
+    transform: translateX(0);
+}
+
+.sidebar-toggle {
+    position: absolute;
+    top: 20px;
+    left: 260px;
+    background-color: #2980b9;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+}
+
+.sidebar-toggle:hover {
+    background-color: #3498db;
+}
+
+.sidebar-menu a {
+    color: white;
+    text-decoration: none;
+    display: block;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    transition: background 0.3s ease-in-out;
+}
+
+.sidebar-menu a:hover {
+    background-color: #34495e;
+}
+
 .capa {
     height: 50px;
 }
 
 #informacion {
     background: white;
-    padding: 20px;
-    margin: 20px 0;
+    padding: 15px;
+    margin: 20px auto;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border: 1px solid #ddd;
     border-radius: 8px;
-    transition: opacity 0.3s ease-in-out;
-    opacity: 1;
+    width: 50%; /* Reducimos el ancho a un 50% */
+    max-width: 600px; /* Máximo ancho de los cuadros */
+    text-align: left;
+    font-size: 14px; /* Tamaño de letra reducido */
+}
+
+/* Caja de Información Estilizada */
+.info-card {
+    background: #fff;
+    padding: 15px;
+    margin: 20px auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    width: 50%; /* Reducimos el ancho a un 50% */
+    max-width: 600px;
+    text-align: left;
+    font-size: 14px; /* Tamaño de letra reducido */
+}
+
+.info-card h2 {
+    font-size: 20px;
+    margin-bottom: 10px;
+    color: #2980b9;
+}
+
+.info-card p {
+    font-size: 14px; /* Tamaño de letra reducido */
+    line-height: 1.6;
+    color: #333;
 }
 
 .d-none {
     display: none;
     opacity: 0;
-}
-
-.button-container {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 20px;
-    flex-wrap: wrap;
-}
-
-.menu-button {
-    background: #3498db;
-    color: white;
-    border: none;
-    padding: 15px 30px;
-    font-size: 16px;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: background 0.3s ease-in-out, transform 0.3s ease-in-out;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.menu-button:hover {
-    background: #2980b9;
-    transform: scale(1.1);
 }
 
 .logout-button {
@@ -146,7 +210,7 @@ video {
 .horarios-container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px; /* Reducido el espaciado entre secciones */
     align-items: center;
 }
 
@@ -156,17 +220,8 @@ video {
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     text-align: center;
-    width: 80%;
-}
-
-.horario-seccion h2 {
-    font-size: 18px;
-    margin-bottom: 10px;
-}
-
-.horario-seccion p {
-    font-size: 16px;
-    line-height: 1.6;
+    width: 50%; /* Reducido el ancho a un 50% */
+    max-width: 600px;
 }
 
 h2, h3 {
@@ -176,7 +231,7 @@ h2, h3 {
 }
 
 p {
-    font-size: 16px;
+    font-size: 14px; /* Reducido el tamaño de letra */
     line-height: 1.6;
 }
 

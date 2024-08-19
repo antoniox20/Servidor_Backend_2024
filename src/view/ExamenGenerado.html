@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,51 +9,36 @@
     <link rel="stylesheet" href="./css/examengenerado.css">
     <script src="https://unpkg.com/ionicons@5.5.2/dist/ionicons.js"></script>
 </head>
+
 <body>
     <header>
-        <nav class="navbar navbar-dark bg-dark">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <div class="container">
-                <span class="navbar-brand mb-0 h1">
-                    <ion-icon name="school-outline"></ion-icon>
-                    Examen de Inglés
-                </span>
+                <a class="navbar-brand" href="#">
+                    <ion-icon name="school-outline"></ion-icon> Examen de Inglés
+                </a>
                 <img src="./img/EIE_ESCUDO.png" alt="Escudo" class="escudo">
-                <button class="btn btn-light ml-auto" onclick="goBack()">Volver</button>
-            </div>
+                
         </nav>
     </header>
     <main class="container mt-4">
-        <div id="examenInfo" class="mb-4">
-            <p><strong>Token:</strong> <span id="tokenDisplay" class="token-display"></span></p>
-            <p><strong>Tiempo restante:</strong> <span id="cronometro">00:00</span> <ion-icon name="time-outline"></ion-icon></p>
+        <div id="examenInfo" class="mb-4 text-center p-3 bg-light rounded-lg shadow">
+            <h5><strong>Token:</strong> <span id="tokenDisplay" class="token-display"></span></h5>
+            <h5><strong>Tiempo restante:</strong> <span id="cronometro" class="text-danger">00:00</span> <ion-icon
+                    name="time-outline"></ion-icon></h5>
         </div>
-        <form id="examenForm">
-            <div class="form-row">
-                <div class="form-group col-md-6">
-                    <label for="nombre">Nombre:</label>
-                    <div class="input-group">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text"><ion-icon name="person-outline"></ion-icon></span>
-                        </div>
-                        <input type="text" class="form-control" id="nombre" name="nombre" required>
-                    </div>
-                </div>
-                <div class="form-group col-md-6">
-                    <label for="apellido">Apellido:</label>
-                    <div class="input-group">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text"><ion-icon name="person-outline"></ion-icon></span>
-                        </div>
-                        <input type="text" class="form-control" id="apellido" name="apellido" required>
-                    </div>
-                </div>
-            </div>
+        <div id="studentInfo" class="mb-4 text-center p-3 bg-light rounded-lg shadow">
+            <h5><strong>Nombre:</strong> <span id="nombreDisplay"></span></h5>
+            <h5><strong>Apellido:</strong> <span id="apellidoDisplay"></span></h5>
+            <h5><strong>Segundo Apellido:</strong> <span id="apellido2Display"></span></h5> <!-- Añadir segundo apellido -->
+            <h5><strong>Nivel:</strong> <span id="nivelDisplay"></span></h5> <!-- Añadir nivel -->
+        </div>
+        <form id="examenForm" class="bg-white p-4 rounded-lg shadow">
             <div id="preguntasContainer">
                 <!-- Preguntas generadas se insertarán aquí -->
             </div>
-            <button type="submit" class="btn btn-primary mt-3 btn-block">
-                <ion-icon name="send-outline"></ion-icon>
-                Enviar Respuestas
+            <button type="submit" class="btn btn-primary mt-4 btn-block">
+                <ion-icon name="send-outline"></ion-icon> Enviar Respuestas
             </button>
         </form>
         <div id="resultado" class="mt-4"></div>
@@ -61,82 +47,119 @@
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@ionic/core@6.1.0/dist/ionic/ionic.js"></script>
     <script>
+        let preguntasGlobal = []; // Variable global para almacenar las preguntas
+        let cronometroInterval; // Guardar referencia al intervalo
+
         function goBack() {
             window.location.href = 'Estudiante.html';
         }
 
-        $(document).ready(function() {
-            // Validar que el nombre y el apellido no contengan números
-            $('#nombre, #apellido').on('input', function() {
-                this.value = this.value.replace(/\d/g, '');
-            });
-
+        $(document).ready(function () {
             const token = new URLSearchParams(window.location.search).get('token') || localStorage.getItem('token');
-            const titulo = localStorage.getItem('titulo');
-            const descripcion = localStorage.getItem('descripcion');
-            const tema = localStorage.getItem('tema');
-            const preguntas = JSON.parse(localStorage.getItem('preguntas'));
-            const tiempo = parseInt(localStorage.getItem('tiempo'), 10); // Obtener el tiempo del localStorage y convertirlo a número
-
-            if (!tiempo || isNaN(tiempo)) {
-                alert('Error: No se pudo obtener el tiempo del examen.');
-                return;
-            }
 
             $('#tokenDisplay').text(token);
 
-            if (preguntas) {
-                const preguntasContainer = $('#preguntasContainer');
-                preguntas.forEach((pregunta, index) => {
-                    let preguntaHtml = `
-                        <div class="pregunta-card mb-3 p-3 shadow-sm border-left border-primary">
-                            <h5>Q${index + 1}: ${pregunta.pregunta} <ion-icon name="help-outline"></ion-icon></h5>
-                    `;
+            // Llamar al backend para obtener los datos del estudiante y del examen utilizando el token
+            fetch(`http://localhost:3000/obtenerExamenPorToken?token=${token}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.exito) {
+                        $('#nombreDisplay').text(data.estudiante.nombre);
+                        $('#apellidoDisplay').text(data.estudiante.apellido);
+                        $('#apellido2Display').text(data.estudiante.apellido2); // Mostrar segundo apellido
+                        $('#nivelDisplay').text(data.estudiante.nivel);
+                        // Almacenar las preguntas globalmente
+                        preguntasGlobal = data.preguntas;
 
-                    if (pregunta.audio) {
-                        preguntaHtml += `
-                            <audio controls class="w-100 mt-2">
-                                <source src="${pregunta.audio}" type="audio/mpeg">
-                                Your browser does not support the audio element.
-                            </audio>
-                        `;
-                    }
-
-                    preguntaHtml += `<ul class="list-unstyled">`;
-
-                    if (pregunta.opciones.length > 0) {
-                        pregunta.opciones.forEach((opcion, i) => {
-                            preguntaHtml += `
-                                <li>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="pregunta${index}" value="${opcion}" id="pregunta${index}_opcion${i}">
-                                        <label class="form-check-label" for="pregunta${index}_opcion${i}">
-                                            ${opcion}
-                                        </label>
-                                    </div>
-                                </li>
+                        // Mostrar las preguntas del examen
+                        const preguntasContainer = $('#preguntasContainer');
+                        data.preguntas.forEach((pregunta, index) => {
+                            let preguntaHtml = `
+                                <div class="pregunta-card mb-3 p-3 shadow-sm border-left border-primary">
+                                    <h5>Q${index + 1}: ${pregunta.pregunta} <ion-icon name="help-outline"></ion-icon></h5>
                             `;
-                        });
-                    } else {
-                        preguntaHtml += `
-                            <li>
-                                <input type="text" class="form-control" name="pregunta${index}" id="pregunta${index}_respuesta">
-                            </li>
-                        `;
-                    }
 
-                    preguntaHtml += `
-                            </ul>
-                        </div>
-                    `;
-                    preguntasContainer.append(preguntaHtml);
+                            if (pregunta.audio) {
+                                preguntaHtml += `
+                                    <audio controls class="w-100 mt-2">
+                                        <source src="${pregunta.audio}" type="audio/mpeg">
+                                        Your browser does not support the audio element.
+                                    </audio>
+                                `;
+                            }
+
+                            preguntaHtml += `<ul class="list-unstyled">`;
+
+                            if (pregunta.opciones.length > 0) {
+                                pregunta.opciones.forEach((opcion, i) => {
+                                    preguntaHtml += `
+                                        <li>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="pregunta${index}" value="${opcion}" id="pregunta${index}_opcion${i}">
+                                                <label class="form-check-label" for="pregunta${index}_opcion${i}">
+                                                    ${opcion}
+                                                </label>
+                                            </div>
+                                        </li>
+                                    `;
+                                });
+                            } else {
+                                preguntaHtml += `
+                                    <li>
+                                        <input type="text" class="form-control" name="pregunta${index}" id="pregunta${index}_respuesta">
+                                    </li>
+                                `;
+                            }
+
+                            preguntaHtml += `
+                                    </ul>
+                                </div>
+                            `;
+                            preguntasContainer.append(preguntaHtml);
+                        });
+
+                        iniciarCronometro(data.tiempoRestante);
+                    } else {
+                        alert('Error: Token inválido o examen no encontrado.');
+                        goBack();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al obtener los datos del examen.');
                 });
+
+            function iniciarCronometro(tiempoRestante) {
+                const actualizarCronometro = () => {
+                    const minutos = Math.floor(tiempoRestante / 60);
+                    const segundos = tiempoRestante % 60;
+                    $('#cronometro').text(`${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`);
+
+                    if (tiempoRestante > 0) {
+                        tiempoRestante--;
+                    } else {
+                        clearInterval(cronometroInterval);
+                        deshabilitarFormulario();
+                        alert('El tiempo ha terminado. El examen será enviado.');
+                        $('#examenForm').submit();
+                    }
+                };
+
+                cronometroInterval = setInterval(actualizarCronometro, 1000); // Guardar el intervalo
+                actualizarCronometro();
             }
 
-            $('#examenForm').submit(async function(e) {
+            function deshabilitarFormulario() {
+                $('#examenForm').find('input, button').attr('disabled', 'disabled');
+            }
+
+            $('#examenForm').submit(async function (e) {
                 e.preventDefault();
 
-                const respuestas = preguntas.map((pregunta, index) => {
+                // Detener el cronómetro al enviar las respuestas
+                clearInterval(cronometroInterval);
+
+                const respuestas = preguntasGlobal.map((pregunta, index) => {
                     let respuestaSeleccionada;
 
                     if (pregunta.opciones.length > 0) {
@@ -152,8 +175,9 @@
                     };
                 });
 
-                const nombre = $('#nombre').val();
-                const apellido = $('#apellido').val();
+                // Obtener nombre y apellido del estudiante desde la interfaz
+                const nombre = $('#nombreDisplay').text();
+                const apellido = $('#apellidoDisplay').text();
 
                 try {
                     const response = await fetch('http://localhost:3000/calificarExamen', {
@@ -168,57 +192,33 @@
 
                     if (response.ok) {
                         $('#examenForm').hide();
+                        // Determinar si el estudiante aprobó o reprobó según la nota
+                        const mensaje = data.nota >= 6 ? "¡Aprobado!" : "Reprobado";
+
                         $('#resultado').html(`
                             <div class="alert alert-info">
                                 <ion-icon name="checkmark-circle-outline"></ion-icon>
                                 Respondiste correctamente ${data.correctas} de ${data.total} preguntas.<br>
-                                <strong>Nota:</strong> ${data.nota} <ion-icon name="ribbon-outline"></ion-icon>
+                                <strong>Nota:</strong> ${data.nota} <ion-icon name="ribbon-outline"></ion-icon><br>
+                                <strong>Estado:</strong> ${mensaje}
                             </div>
                         `);
                         $('#detallesResultado').html(data.detalles);
                         $('#detallesResultado').append(`
                             <button class="btn btn-primary mt-3" onclick="window.location.href='Estudiante.html'">
-                                <ion-icon name="arrow-back-outline"></ion-icon>
-                                Regresar al Menú
+                                <ion-icon name="arrow-back-outline"></ion-icon> Regresar al Menú
                             </button>
                         `);
-                        clearInterval(cronometroInterval); // Detener el cronómetro
                     } else {
-                        console.error('Error Examen ya Resuelto:', data);
-                        alert('Error Examen ya Resuelto');
+                        alert('Error al calificar el examen');
                     }
                 } catch (error) {
-                    console.error('Error Examen ya Resuelto:', error);
-                    alert('Error Examen ya Resuelto');
+                    console.error('Error al calificar el examen:', error);
+                    alert('Error al calificar el examen');
                 }
             });
-
-            const deshabilitarFormulario = () => {
-                $('#examenForm').find('input, button').attr('disabled', 'disabled');
-            };
-
-            let tiempoRestante = tiempo; // Utilizar el tiempo obtenido del localStorage
-
-            const actualizarCronometro = () => {
-                const minutos = Math.floor(tiempoRestante / 60);
-                const segundos = tiempoRestante % 60;
-                $('#cronometro').text(`${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`);
-
-                if (tiempoRestante > 0) {
-                    tiempoRestante--;
-                } else {
-                    clearInterval(cronometroInterval);
-                    deshabilitarFormulario();
-                    alert('El tiempo ha terminado. El examen será enviado.');
-                    $('#examenForm').submit();
-                }
-            };
-
-            const cronometroInterval = setInterval(actualizarCronometro, 1000);
-
-            // Mostrar tiempo inicial correctamente
-            actualizarCronometro();
         });
     </script>
 </body>
+
 </html>

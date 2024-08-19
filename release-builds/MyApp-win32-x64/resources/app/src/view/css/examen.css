@@ -1,0 +1,92 @@
+/* Estilos globales */
+body {
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(135deg, #6dd5ed, #2193b0); /* Fondo con gradiente */
+    color: #ffffff; /* Texto blanco para mejor contraste */
+    transition: background-color 0.5s ease; /* Transición suave del fondo */
+}
+
+header {
+    margin-bottom: 20px;
+}
+
+body {
+    background-size: cover;
+}
+
+h5 {
+    margin-top: 20px;
+    color: #f0f0f0;
+}
+
+/* Estilos para el formulario */
+form {
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease-in-out; /* Añade una transición a la sombra */
+}
+
+form .form-group label {
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    color: #343a40; /* Oscuro para mejor visibilidad en fondo claro del formulario */
+}
+
+form .form-group label i {
+    margin-right: 10px;
+    transition: transform 0.3s ease; /* Rota el icono al enfocar */
+}
+
+form .form-control {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    transition: border-color 0.3s, box-shadow 0.3s; /* Suaviza la transición de los bordes y sombra */
+}
+
+form .form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.25);
+    transform: scale(1.02); /* Ligeramente más grande al enfocar */
+}
+
+form .btn-primary {
+    background-color: #28a745; /* Color verde para el botón */
+    border-color: #28a745;
+    transition: background-color 0.3s, border-color 0.3s, transform 0.2s ease-out;
+}
+
+form .btn-primary:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+    transform: scale(1.05); /* Ligeramente más grande al pasar el ratón */
+}
+
+/* Estilos para el navbar */
+.navbar-dark .navbar-brand {
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+}
+
+.navbar-dark .navbar-brand i {
+    margin-right: 10px;
+    transition: rotate(360deg);
+}
+
+/* Estilos para el footer */
+footer {
+    background: #343a40;
+    color: #ffffff;
+    text-align: center;
+    padding: 10px 0;
+    transition: background-color 0.5s ease; /* Transición suave del color de fondo */
+}
+
+footer p {
+    margin-bottom: 0;
+}

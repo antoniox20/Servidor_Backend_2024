@@ -1,0 +1,191 @@
+/* General Styles */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f0f4f8;
+    color: #2d3e50;
+    padding: 20px;
+}
+
+header {
+    background-color: #34495e;
+    color: white;
+    padding: 15px 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+header .navbar-brand {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.navbar {
+    border-bottom: 3px solid #3498db;
+}
+
+.btn-primary {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+}
+
+/* Main Heading */
+h2 {
+    color: #2980b9;
+    font-weight: bold;
+    font-size: 28px;
+    text-align: center;
+    margin-bottom: 40px;
+    text-transform: uppercase;
+}
+
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Table Styles */
+.table {
+    margin-top: 20px;
+    width: 100%;
+    background-color: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.table thead {
+    background-color: #2980b9;
+    color: white;
+    text-align: center;
+    font-weight: bold;
+}
+
+.table tbody tr {
+    text-align: center;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.table tbody tr:hover {
+    background-color: #ecf0f1;
+}
+
+.table tbody tr td {
+    padding: 15px;
+    vertical-align: middle;
+}
+
+/* Selectors */
+select.form-control {
+    width: 100%;
+    padding: 8px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 2px solid #ced4da;
+    transition: border-color 0.3s ease;
+}
+
+select.form-control:focus {
+    border-color: #2980b9;
+    outline: none;
+    box-shadow: 0 0 8px rgba(41, 128, 185, 0.5);
+}
+
+select.form-control:disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+
+/* Button Styles */
+.btn {
+    padding: 12px 25px;
+    font-size: 16px;
+    border-radius: 50px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #3498db;
+    border-color: #3498db;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+    box-shadow: 0px 8px 16px rgba(41, 128, 185, 0.3);
+}
+
+.btn-primary:disabled {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+/* Card Styles */
+.list-container {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.1);
+    margin-bottom: 40px;
+}
+
+/* Animation */
+.table tbody tr:hover {
+    background-color: #d0eaf7;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+/* Header & Footer Animation */
+header,
+.navbar {
+    animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+    0% {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Special Effects */
+.table tbody tr td:hover {
+    background-color: #d0eaf7;
+    color: #2980b9;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Table Borders */
+.table thead th {
+    border-top: none;
+}
+
+.table tbody td {
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Accent Colors */
+body {
+    background: linear-gradient(45deg, #d1e8ff, #f2f7ff);
+}
+
+.table thead th {
+    border-color: #ecf0f1;
+}
+
+h2 {
+    color: #2c3e50;
+}

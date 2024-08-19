@@ -12,17 +12,60 @@ const Examen = require('./Entidades/Examen');
 const { generateQuestions } = require('./generacion');
 const Pregunta = require('./Entidades/Preguntas');
 const Resultado = require('./Entidades/Resultados'); 
+const Seguimiento = require('./Entidades/Seguimiento');
 const multer = require('multer');
 const fs = require('fs');
 const http = require('http');
 const socketIO = require('socket.io'); 
+const net = require('net');
+const cors = require('cors'); 
+
 const appExpress = express();
 const server = http.createServer(appExpress); 
-const io = socketIO(server); 
-const PORT = 3000;
-const cors = require('cors'); 
-const { verificarTokenPersonalizado } = require('./VerificarToken');
-const { generarTokenPersonalizado, generarPalabrasClave } = require('./GeneracionToken');
+const io = socketIO(server);
+
+appExpress.use(cors());
+const PORTS = [3000, 3001];
+
+
+function checkPort(port) {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+
+    server.once('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        resolve(false); // El puerto está en uso
+      } else {
+        reject(err);
+      }
+    });
+
+    server.once('listening', () => {
+      server.close();
+      resolve(true); // El puerto no está en uso
+    });
+
+    server.listen(port);
+  });
+}
+
+async function startServer() {
+  for (let port of PORTS) {
+    const isAvailable = await checkPort(port);
+    if (isAvailable) {
+      server.listen(port, () => {
+        console.log(`Servidor Express con socket.io corriendo en http://localhost:${port}`);
+      });
+      break;
+    } else {
+      console.log(`Puerto ${port} está en uso. Intentando con otro puerto...`);
+    }
+  }
+}
+
+// Iniciar el servidor en un puerto disponible
+startServer();
+
 
 // carpeta uploads 
 const uploadDir = 'uploads';
@@ -40,11 +83,6 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + '-' + file.originalname);
   }
 });
-
-
-// permitir solicitudes desde cualquier origen, puedes usar:
-appExpress.use(cors());
-
 
 const upload = multer({ storage: storage });
 
@@ -70,10 +108,48 @@ io.on('connection', (socket) => {
   });
 });
 
-// Iniciar servidor Express con soporte de sockets
-server.listen(PORT, () => {
-  console.log(`Servidor Express con socket.io corriendo en http://localhost:${PORT}`);
+//Ruta para obtener los datos del estudiante por el token
+appExpress.get('/obtenerExamenPorToken', async (req, res) => {
+  const { token } = req.query;
+
+  try {
+    // Verificar si el examen ya ha sido resuelto
+    const resultado = await Resultado.findOne({ token });
+    if (resultado) {
+      return res.status(400).json({ message: 'Este examen ya ha sido resuelto.' });
+    }
+
+    // Buscar el examen utilizando el token
+    const examen = await Examen.findOne({ token });
+
+    if (!examen) {
+      return res.status(404).json({ message: 'Token no encontrado' });
+    }
+
+    // Buscar el estudiante asociado al examen
+    const estudiante = await Estudiante.findOne({ examenAsignado: token });
+
+    if (!estudiante) {
+      return res.status(404).json({ message: 'Estudiante no encontrado' });
+    }
+
+    // Enviar la respuesta con los datos del estudiante, el examen y el nivel
+    res.json({
+      exito: true,
+      estudiante: {
+        nombre: estudiante.nombre,
+        apellido: estudiante.apellido,
+        apellido2: estudiante.apellido2,  
+        nivel: estudiante.nivel           
+      },
+      preguntas: examen.preguntas,
+      tiempoRestante: examen.tiempo 
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener el examen', error });
+  }
 });
+
 
 // preguntas con carga de audio
 appExpress.post('/preguntas', upload.single('audio'), async (req, res) => {
@@ -235,6 +311,13 @@ appExpress.post('/verificarToken', async (req, res) => {
   const { token } = req.body;
 
   try {
+    // Verificar si el examen ya ha sido resuelto
+    const resultado = await Resultado.findOne({ token });
+    if (resultado) {
+      return res.status(400).json({ message: 'Este examen ya ha sido resuelto.' });
+    }
+
+    // Verificar si el token es válido y está asociado con un examen
     const examen = await Examen.findOne({ token });
 
     if (!examen) {
@@ -383,6 +466,7 @@ appExpress.get('/estudiantes', async (req, res) => {
   }
 });
 
+//ruta para obtener al estudiante
 appExpress.get('/estudiantes/:id', async (req, res) => {
   try {
     const estudiante = await Estudiante.findById(req.params.id);
@@ -393,45 +477,120 @@ appExpress.get('/estudiantes/:id', async (req, res) => {
   }
 });
 
+//ruta para registro de estudiantes
 appExpress.post('/registro', async (req, res) => {
-  const { nombre, apellido, apellido2, fechaDeNacimiento, email, telefono } = req.body;
-
-  const nuevoEstudiante = new Estudiante({
-    nombre,
-    apellido,
-    apellido2,
-    fechaDeNacimiento,
-    email,
-    telefono
-  });
+  const { nombre, apellido, apellido2, fechaDeNacimiento, email, telefono, nivel, examenAsignado } = req.body;
 
   try {
-    await nuevoEstudiante.save();
-    res.status(201).send('Estudiante registrado exitosamente');
-  } catch (err) {
-    console.error('Error al registrar al estudiante:', err);
-    res.status(400).send('Error al registrar al estudiante');
-  }
-});
+    // Verificar si ya existe un estudiante con el mismo email o teléfono
+    const estudianteExistente = await Estudiante.findOne({ $or: [{ email }, { telefono }] });
 
-appExpress.put('/estudiantes/:id', async (req, res) => {
-  const { nombre, apellido, apellido2, fechaDeNacimiento, email, telefono } = req.body;
-  try {
-    const estudiante = await Estudiante.findByIdAndUpdate(req.params.id, {
+    if (estudianteExistente) {
+      return res.status(400).send('El correo electrónico o el teléfono ya están registrados.');
+    }
+
+    // Si no existe, crear un nuevo estudiante
+    const nuevoEstudiante = new Estudiante({
       nombre,
       apellido,
       apellido2,
       fechaDeNacimiento,
       email,
-      telefono
-    }, { new: true });
-    res.status(200).send('Estudiante actualizado exitosamente');
+      telefono,
+      nivel,
+      examenAsignado
+    });
+
+    await nuevoEstudiante.save();
+    res.status(201).send('Estudiante registrado exitosamente');
   } catch (err) {
-    console.error('Error al actualizar al estudiante:', err);
-    res.status(400).send('Error al actualizar al estudiante');
+    console.error('Error al registrar al estudiante:', err);
+    res.status(500).send('Error al registrar al estudiante');
   }
 });
 
+
+// Ruta para asignar examen a un estudiante
+appExpress.post('/asignarExamen', async (req, res) => {
+  const { estudianteId, examenToken } = req.body;
+
+  try {
+    // Verificar si el examen ya ha sido asignado a otro estudiante
+    const estudianteConExamen = await Estudiante.findOne({ examenAsignado: examenToken });
+
+    if (estudianteConExamen) {
+      return res.status(400).send('Este examen ya ha sido asignado a otro estudiante.');
+    }
+
+    // Asignar el examen al estudiante si no ha sido asignado a otro estudiante
+    const estudiante = await Estudiante.findById(estudianteId);
+    if (!estudiante) {
+      return res.status(404).send('Estudiante no encontrado');
+    }
+
+    estudiante.examenAsignado = examenToken;
+    await estudiante.save();
+
+    res.status(200).send('Examen asignado exitosamente');
+  } catch (error) {
+    console.error('Error al asignar el examen:', error);
+    res.status(500).send('Error al asignar el examen');
+  }
+});
+
+// Ruta para obtener exámenes clasificados por nivel
+appExpress.get('/examenesPorNivel', async (req, res) => {
+  try {
+      const basico = await Examen.find({ dificultad: 'facil' }).select('token');
+      const intermedio = await Examen.find({ dificultad: 'medio' }).select('token');
+      const avanzado = await Examen.find({ dificultad: 'dificil' }).select('token');
+
+      console.log('Exámenes básicos:', basico);
+      console.log('Exámenes intermedios:', intermedio);
+      console.log('Exámenes avanzados:', avanzado);
+
+      res.json({ basico, intermedio, avanzado });
+  } catch (error) {
+      console.error('Error al obtener los exámenes por nivel:', error);
+      res.status(500).send('Error al obtener los exámenes por nivel');
+  }
+});
+
+//ruta para acualizar estudiante
+appExpress.put('/estudiantes/:id', async (req, res) => {
+  const { nombre, apellido, apellido2, fechaDeNacimiento, email, telefono, nivel, examenAsignado } = req.body;
+
+  try {
+    // Verificar si ya existe un estudiante con el mismo email o teléfono, excluyendo al estudiante que se está actualizando
+    const estudianteExistente = await Estudiante.findOne({ 
+      $or: [{ email }, { telefono }],
+      _id: { $ne: req.params.id }  // Excluir el estudiante que se está actualizando
+    });
+
+    if (estudianteExistente) {
+      return res.status(400).send('El correo electrónico o el teléfono ya están registrados.');
+    }
+
+    // Si no hay conflicto, actualizar el estudiante
+    await Estudiante.findByIdAndUpdate(req.params.id, {
+      nombre,
+      apellido,
+      apellido2,
+      fechaDeNacimiento,
+      email,
+      telefono,
+      nivel,
+      examenAsignado
+    }, { new: true });
+
+    res.status(200).send('Estudiante actualizado exitosamente');
+  } catch (err) {
+    console.error('Error al actualizar al estudiante:', err);
+    res.status(500).send('Error al actualizar al estudiante');
+  }
+});
+
+//ruta para eliminar al estudiante
 appExpress.delete('/estudiantes/:id', async (req, res) => {
   try {
     await Estudiante.findByIdAndDelete(req.params.id);
@@ -713,17 +872,6 @@ appExpress.get('/generarReporte', async (req, res) => {
 });
 
 
-
-//appExpress.listen(PORT, () => {
-  //console.log(`Servidor Express corriendo en http://localhost:${PORT}`);
-//});
-
-if (process.env.NODE_ENV !== 'Admin') {
-  require('electron-reload')(__dirname, {
-    electron: path.join(__dirname, '../node_modules', '.bin', 'electron')
-  });
-}
-
 // Ruta de inicio de sesion del Estudiante 
 appExpress.post('/loginEstudiante', async (req, res) => {
   const { email, telefono } = req.body;
@@ -741,6 +889,35 @@ appExpress.post('/loginEstudiante', async (req, res) => {
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 });
+
+// Nueva ruta para inicio de sesión en la aplicación móvil que devuelve nivel y token
+appExpress.post('/loginEstudianteToken', async (req, res) => {
+  const { email, telefono } = req.body;
+
+  try {
+    console.log('Datos recibidos:', { email, telefono });  // Verifica los datos recibidos
+
+    const estudiante = await Estudiante.findOne({ email, telefono });
+    console.log('Estudiante encontrado:', estudiante);  // Verifica si encuentra al estudiante
+
+    if (!estudiante) {
+      console.log('Estudiante no encontrado, credenciales incorrectas');
+      return res.status(401).json({ message: 'Credenciales incorrectas' });
+    }
+
+    // Devolver el nivel y el token del examen asignado
+    res.json({
+      message: 'Autenticación exitosa',
+      nivel: estudiante.nivel,
+      token: estudiante.examenAsignado
+    });
+
+  } catch (dbError) {
+    console.error('Error al acceder a la base de datos:', dbError);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
 
 // Ventanas para las interfaces 
 
@@ -1051,6 +1228,31 @@ function createStudentWindow() {
   });
 }
 
+// Ruta para eliminar seguimiento
+appExpress.delete('/seguimiento/:id', async (req, res) => {
+  const seguimientoId = req.params.id;
+  try {
+    const seguimiento = await Seguimiento.findByIdAndDelete(seguimientoId);
+    if (!seguimiento) {
+      return res.status(404).send('Registro de seguimiento no encontrado');
+    }
+    res.status(200).send('Registro eliminado exitosamente');
+  } catch (error) {
+    console.error('Error al eliminar el seguimiento:', error);
+    res.status(500).send('Error al eliminar el registro');
+  }
+});
+
+// Ruta del seguimiento al estudiante
+appExpress.get('/seguimiento', async (req, res) => {
+  try {
+    const seguimiento = await Seguimiento.find();
+    res.json(seguimiento);
+  } catch (err) {
+    console.error('Error al obtener el seguimiento de ingresos:', err);
+    res.status(500).send('Error al obtener el seguimiento de ingresos');
+  }
+});
 
 // Manejo del login
 ipcMain.handle('login', async (event, identifier, credential) => {
@@ -1067,6 +1269,18 @@ ipcMain.handle('login', async (event, identifier, credential) => {
     const estudiante = await Estudiante.findOne({ email: identifier, telefono: credential });
     if (estudiante) {
       console.log('Estudiante autenticado:', estudiante);
+
+      // Registrar el ingreso del estudiante
+      const nuevoSeguimiento = new Seguimiento({
+        nombre: estudiante.nombre,
+        apellido: estudiante.apellido,
+        email: estudiante.email,
+        telefono: estudiante.telefono,
+        horaIngreso: new Date()
+      });
+
+      await nuevoSeguimiento.save();
+
       event.sender.send('login-success-estudiante');
       return 'estudiante';
     }

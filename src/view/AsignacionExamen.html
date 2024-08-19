@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asignación de Examen</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./css/asignacion_examen.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                <a class="navbar-brand" href="#">Asignación de Examen</a>
+                <div class="ml-auto">
+                    <button class="btn btn-primary" onclick="goBack()">Volver</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <main class="container mt-5">
+        <h2 class="mb-4">Asignar Exámenes a Estudiantes</h2>
+        <div class="list-container">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>Correo Electrónico</th>
+                        <th>Nivel de Inglés</th>
+                        <th>Asignar Examen Básico</th>
+                        <th>Asignar Examen Intermedio</th>
+                        <th>Asignar Examen Avanzado</th>
+                    </tr>
+                </thead>
+                <tbody id="listaEstudiantes">
+                    <!-- Aquí se cargarán los estudiantes -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+
+        $(document).ready(function () {
+            cargarEstudiantes();
+            cargarExamenesPorNivel();
+
+            // Cargar los estudiantes
+            function cargarEstudiantes() {
+                $.ajax({
+                    type: 'GET',
+                    url: 'http://localhost:3000/estudiantes',
+                    success: function (estudiantes) {
+                        const listaEstudiantes = $('#listaEstudiantes');
+                        listaEstudiantes.empty();
+
+                        estudiantes.forEach(estudiante => {
+                            const examenAsignado = estudiante.examenAsignado ? `Examen asignado: ${estudiante.examenAsignado}` : '';
+                            const disabledAttr = estudiante.examenAsignado ? 'disabled' : '';
+
+                            listaEstudiantes.append(
+                                `<tr>
+                                    <td>${estudiante.nombre}</td>
+                                    <td>${estudiante.apellido}</td>
+                                    <td>${estudiante.email}</td>
+                                    <td>${estudiante.nivel}</td>
+                                    <td>
+                                        <select class="form-control asignar-examen-basico" data-estudiante-id="${estudiante._id}" ${disabledAttr} ${estudiante.nivel !== 'basico' ? 'disabled' : ''}>
+                                            <option value="" disabled selected>Seleccione un examen básico</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select class="form-control asignar-examen-intermedio" data-estudiante-id="${estudiante._id}" ${disabledAttr} ${estudiante.nivel !== 'intermedio' ? 'disabled' : ''}>
+                                            <option value="" disabled selected>Seleccione un examen intermedio</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select class="form-control asignar-examen-avanzado" data-estudiante-id="${estudiante._id}" ${disabledAttr} ${estudiante.nivel !== 'avanzado' ? 'disabled' : ''}>
+                                            <option value="" disabled selected>Seleccione un examen avanzado</option>
+                                        </select>
+                                    </td>
+                                    <td>${examenAsignado}</td>
+                                </tr>`
+                            );
+                        });
+                    },
+                    error: function (error) {
+                        console.error('Error al cargar la lista de estudiantes:', error);
+                    }
+                });
+            }
+
+            // Cargar los exámenes y clasificarlos por nivel
+            function cargarExamenesPorNivel() {
+                $.ajax({
+                    type: 'GET',
+                    url: 'http://localhost:3000/examenesPorNivel',
+                    success: function (response) {
+                        const { basico, intermedio, avanzado } = response;
+
+                        // Añadir los exámenes básicos a los selectores correspondientes
+                        $('.asignar-examen-basico').each(function () {
+                            const select = $(this);
+                            basico.forEach(examen => {
+                                select.append(`<option value="${examen.token}">${examen.token}</option>`);
+                            });
+                        });
+
+                        // Añadir los exámenes intermedios a los selectores correspondientes
+                        $('.asignar-examen-intermedio').each(function () {
+                            const select = $(this);
+                            intermedio.forEach(examen => {
+                                select.append(`<option value="${examen.token}">${examen.token}</option>`);
+                            });
+                        });
+
+                        // Añadir los exámenes avanzados a los selectores correspondientes
+                        $('.asignar-examen-avanzado').each(function () {
+                            const select = $(this);
+                            avanzado.forEach(examen => {
+                                select.append(`<option value="${examen.token}">${examen.token}</option>`);
+                            });
+                        });
+                    },
+                    error: function (error) {
+                        console.error('Error al cargar los exámenes por nivel:', error);
+                    }
+                });
+            }
+
+            // Asignar examen al estudiante cuando se seleccione un examen
+            $(document).on('change', '.asignar-examen-basico, .asignar-examen-intermedio, .asignar-examen-avanzado', function () {
+                const examenToken = $(this).val();
+                const estudianteId = $(this).data('estudiante-id');
+                const selectElement = $(this);
+
+                if (examenToken && estudianteId) {
+                    $.ajax({
+                        type: 'POST',
+                        url: 'http://localhost:3000/asignarExamen',
+                        data: { estudianteId, examenToken },
+                        success: function (response) {
+                            alert('Examen asignado exitosamente');
+                            // Deshabilitar todos los selectores para ese estudiante
+                            selectElement.closest('tr').find('select').attr('disabled', true);
+                        },
+                        error: function (error) {
+                            if (error.status === 400) {
+                                alert('Este examen ya ha sido asignado a otro estudiante.');
+                                // Resetear el select a la opción predeterminada
+                                selectElement.val('');
+                            } else {
+                                console.error('Error al asignar el examen:', error);
+                                alert('Error al asignar el examen');
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

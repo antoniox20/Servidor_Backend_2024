@@ -1,0 +1,202 @@
+/* estilos.css */
+
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(to right, #1abc9c, #254fd9);
+    color: #333;
+    position: relative;
+}
+
+/* Imagen de fondo como marca de agua */
+body::before {
+    content: "";
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-20%, -30%);
+    background-image: url('../img/Escudo.jpg');
+    background-size: 43%; 
+    background-repeat: no-repeat;
+    opacity: 0.15; 
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
+.header {
+    background: #13d75478;
+    color: white;
+    padding: 15px 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.logo h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.menu a {
+    color: white;
+    text-decoration: none;
+    margin: 0 10px;
+    font-size: 16px;
+    transition: color 0.3s ease-in-out, transform 0.3s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    padding: 5px 10px;
+}
+
+.menu a:hover {
+    text-decoration: underline;
+    color: #f1c40f;
+    transform: scale(1.1);
+}
+
+.capa {
+    height: 50px;
+}
+
+#informacion {
+    background: white;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    transition: opacity 0.3s ease-in-out;
+    opacity: 1;
+}
+
+.d-none {
+    display: none;
+    opacity: 0;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.menu-button {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.3s ease-in-out, transform 0.3s ease-in-out;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.menu-button:hover {
+    background: #2980b9;
+    transform: scale(1.1);
+}
+
+.logout-button {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    transition: background 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.logout-button:hover {
+    background: #c0392b;
+    transform: scale(1.1);
+}
+
+.map-container {
+    margin-top: 20px;
+    width: 100%;
+}
+
+.map-container iframe {
+    width: 100%;
+    height: 450px;
+    border: 0;
+}
+
+.video-container {
+    background-color: #1abc9c;
+    margin: 20px 0;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: center;
+}
+
+video {
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+}
+
+.horarios-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+}
+
+.horario-seccion {
+    background: #e3f2fd;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 80%;
+}
+
+.horario-seccion h2 {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.horario-seccion p {
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+h2, h3 {
+    color: #333;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+p {
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+h2 i, h3 i {
+    margin-right: 10px;
+}

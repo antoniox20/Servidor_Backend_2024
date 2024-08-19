@@ -1,0 +1,186 @@
+body {
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    font-family: 'Arial', sans-serif;
+    color: #ffffff;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container-fluid {
+    max-width: 1200px;
+    width: 100%;
+}
+
+.side-box {
+    background-color: #000;
+    border: 3px solid #FFD700;
+    border-radius: 40px;
+    height: 100%;
+    margin-top: 10px;
+}
+
+.card {
+    border-radius: 25px;
+    overflow: hidden;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.95);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: #ffffff;
+    padding: 30px;
+}
+
+.card-header h1 {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.card-header p {
+    color: #ffffff;
+}
+
+.featured-image img {
+    max-width: 150px;
+    border-radius: 50%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    margin-bottom: 15px;
+}
+
+.qr-reader-frame {
+    border: 4px dashed #28a745;
+    border-radius: 10px;
+    padding: 20px;
+    background-color: #ffffff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.qr-reader-frame::before {
+    content: 'Escanea aquí';
+    color: #007bff;
+    font-weight: bold;
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ffffff;
+    padding: 0 10px;
+    border-radius: 4px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+#qr-reader-results {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #28a745;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #e8f5e9;
+    border-radius: 8px;
+    border: 2px solid #28a745;
+}
+
+.btn-secondary {
+    background-color: #eb0606b5;
+    border-color: #49fd02;
+    transition: all 0.2s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-secondary:hover {
+    background-color: #0421b4;
+    border-color: #e7fb09;
+}
+
+.btn-lg i {
+    margin-right: 8px;
+}
+
+.card-footer {
+    background: #f8f9fa;
+    padding: 20px;
+    border-top: 2px solid #007bff;
+}
+
+.card-footer p {
+    margin-bottom: 0;
+    font-size: 1rem;
+}
+
+.promocion {
+    text-align: center;
+}
+
+.promocion img.escudo {
+    max-width: 100px;
+    display: block;
+    margin: 0 auto 10px;
+}
+
+.promocion p {
+    font-size: 1rem;
+    color: #333;
+}
+
+.promocion ul {
+    list-style: none;
+    padding-left: 0;
+    color: #333;
+}
+
+.promocion ul li {
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+.promocion ul li::before {
+    content: "🔴";
+    margin-right: 8px;
+    color: red;
+}
+
+.contacto {
+    background: #ffffff;
+    color: #333;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+.contacto h5 {
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+.contacto ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.contacto ul li {
+    margin-bottom: 10px;
+}
+
+.contacto ul li a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.contacto ul li a:hover {
+    text-decoration: underline;
+}
+
+.contacto p {
+    font-size: 0.9rem;
+}
+
+.contacto p a {
+    color: #007bff;
+}

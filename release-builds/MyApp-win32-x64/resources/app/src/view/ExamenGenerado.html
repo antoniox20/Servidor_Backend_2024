@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen Generado</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./css/examengenerado.css">
+    <script src="https://unpkg.com/ionicons@5.5.2/dist/ionicons.js"></script>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-dark bg-dark">
+            <div class="container">
+                <span class="navbar-brand mb-0 h1">
+                    <ion-icon name="school-outline"></ion-icon>
+                    Examen de Inglés
+                </span>
+                <img src="./img/EIE_ESCUDO.png" alt="Escudo" class="escudo">
+                <button class="btn btn-light ml-auto" onclick="goBack()">Volver</button>
+            </div>
+        </nav>
+    </header>
+    <main class="container mt-4">
+        <div id="examenInfo" class="mb-4">
+            <p><strong>Token:</strong> <span id="tokenDisplay" class="token-display"></span></p>
+            <p><strong>Tiempo restante:</strong> <span id="cronometro">00:00</span> <ion-icon name="time-outline"></ion-icon></p>
+        </div>
+        <form id="examenForm">
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="nombre">Nombre:</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><ion-icon name="person-outline"></ion-icon></span>
+                        </div>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                    </div>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="apellido">Apellido:</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><ion-icon name="person-outline"></ion-icon></span>
+                        </div>
+                        <input type="text" class="form-control" id="apellido" name="apellido" required>
+                    </div>
+                </div>
+            </div>
+            <div id="preguntasContainer">
+                <!-- Preguntas generadas se insertarán aquí -->
+            </div>
+            <button type="submit" class="btn btn-primary mt-3 btn-block">
+                <ion-icon name="send-outline"></ion-icon>
+                Enviar Respuestas
+            </button>
+        </form>
+        <div id="resultado" class="mt-4"></div>
+        <div id="detallesResultado" class="mt-4"></div>
+    </main>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ionic/core@6.1.0/dist/ionic/ionic.js"></script>
+    <script>
+        function goBack() {
+            window.location.href = 'Estudiante.html';
+        }
+
+        $(document).ready(function() {
+            // Validar que el nombre y el apellido no contengan números
+            $('#nombre, #apellido').on('input', function() {
+                this.value = this.value.replace(/\d/g, '');
+            });
+
+            const token = new URLSearchParams(window.location.search).get('token') || localStorage.getItem('token');
+            const titulo = localStorage.getItem('titulo');
+            const descripcion = localStorage.getItem('descripcion');
+            const tema = localStorage.getItem('tema');
+            const preguntas = JSON.parse(localStorage.getItem('preguntas'));
+            const tiempo = parseInt(localStorage.getItem('tiempo'), 10); // Obtener el tiempo del localStorage y convertirlo a número
+
+            if (!tiempo || isNaN(tiempo)) {
+                alert('Error: No se pudo obtener el tiempo del examen.');
+                return;
+            }
+
+            $('#tokenDisplay').text(token);
+
+            if (preguntas) {
+                const preguntasContainer = $('#preguntasContainer');
+                preguntas.forEach((pregunta, index) => {
+                    let preguntaHtml = `
+                        <div class="pregunta-card mb-3 p-3 shadow-sm border-left border-primary">
+                            <h5>Q${index + 1}: ${pregunta.pregunta} <ion-icon name="help-outline"></ion-icon></h5>
+                    `;
+
+                    if (pregunta.audio) {
+                        preguntaHtml += `
+                            <audio controls class="w-100 mt-2">
+                                <source src="${pregunta.audio}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                        `;
+                    }
+
+                    preguntaHtml += `<ul class="list-unstyled">`;
+
+                    if (pregunta.opciones.length > 0) {
+                        pregunta.opciones.forEach((opcion, i) => {
+                            preguntaHtml += `
+                                <li>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="pregunta${index}" value="${opcion}" id="pregunta${index}_opcion${i}">
+                                        <label class="form-check-label" for="pregunta${index}_opcion${i}">
+                                            ${opcion}
+                                        </label>
+                                    </div>
+                                </li>
+                            `;
+                        });
+                    } else {
+                        preguntaHtml += `
+                            <li>
+                                <input type="text" class="form-control" name="pregunta${index}" id="pregunta${index}_respuesta">
+                            </li>
+                        `;
+                    }
+
+                    preguntaHtml += `
+                            </ul>
+                        </div>
+                    `;
+                    preguntasContainer.append(preguntaHtml);
+                });
+            }
+
+            $('#examenForm').submit(async function(e) {
+                e.preventDefault();
+
+                const respuestas = preguntas.map((pregunta, index) => {
+                    let respuestaSeleccionada;
+
+                    if (pregunta.opciones.length > 0) {
+                        respuestaSeleccionada = $(`input[name="pregunta${index}"]:checked`).val();
+                    } else {
+                        respuestaSeleccionada = $(`#pregunta${index}_respuesta`).val();
+                    }
+
+                    return {
+                        pregunta: pregunta.pregunta,
+                        respuestaSeleccionada: respuestaSeleccionada,
+                        respuestaCorrecta: pregunta.respuestaCorrecta
+                    };
+                });
+
+                const nombre = $('#nombre').val();
+                const apellido = $('#apellido').val();
+
+                try {
+                    const response = await fetch('http://localhost:3000/calificarExamen', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ token, nombre, apellido, respuestas })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        $('#examenForm').hide();
+                        $('#resultado').html(`
+                            <div class="alert alert-info">
+                                <ion-icon name="checkmark-circle-outline"></ion-icon>
+                                Respondiste correctamente ${data.correctas} de ${data.total} preguntas.<br>
+                                <strong>Nota:</strong> ${data.nota} <ion-icon name="ribbon-outline"></ion-icon>
+                            </div>
+                        `);
+                        $('#detallesResultado').html(data.detalles);
+                        $('#detallesResultado').append(`
+                            <button class="btn btn-primary mt-3" onclick="window.location.href='Estudiante.html'">
+                                <ion-icon name="arrow-back-outline"></ion-icon>
+                                Regresar al Menú
+                            </button>
+                        `);
+                        clearInterval(cronometroInterval); // Detener el cronómetro
+                    } else {
+                        console.error('Error Examen ya Resuelto:', data);
+                        alert('Error Examen ya Resuelto');
+                    }
+                } catch (error) {
+                    console.error('Error Examen ya Resuelto:', error);
+                    alert('Error Examen ya Resuelto');
+                }
+            });
+
+            const deshabilitarFormulario = () => {
+                $('#examenForm').find('input, button').attr('disabled', 'disabled');
+            };
+
+            let tiempoRestante = tiempo; // Utilizar el tiempo obtenido del localStorage
+
+            const actualizarCronometro = () => {
+                const minutos = Math.floor(tiempoRestante / 60);
+                const segundos = tiempoRestante % 60;
+                $('#cronometro').text(`${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`);
+
+                if (tiempoRestante > 0) {
+                    tiempoRestante--;
+                } else {
+                    clearInterval(cronometroInterval);
+                    deshabilitarFormulario();
+                    alert('El tiempo ha terminado. El examen será enviado.');
+                    $('#examenForm').submit();
+                }
+            };
+
+            const cronometroInterval = setInterval(actualizarCronometro, 1000);
+
+            // Mostrar tiempo inicial correctamente
+            actualizarCronometro();
+        });
+    </script>
+</body>
+</html>

@@ -40,16 +40,25 @@
                     </div>
                     <div class="form-group col-md-6">
                         <label for="fechaDeNacimiento">Fecha de Nacimiento:</label>
-                        <input type="date" class="form-control input-focus" id="fechaDeNacimiento" name="fechaDeNacimiento" required>
+                        <input type="date" class="form-control input-focus" id="fechaDeNacimiento" name="fechaDeNacimiento" required max="">
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="email">Correo Electrónico:</label>
-                    <input type="email" class="form-control input-focus" id="email" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="telefono">Teléfono:</label>
-                    <input type="tel" class="form-control input-focus" id="telefono" name="telefono">
+                    <div class="form-group col-md-6">
+                        <label for="email">Correo Electrónico:</label>
+                        <input type="email" class="form-control input-focus" id="email" name="email" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="telefono">Teléfono:</label>
+                        <input type="tel" class="form-control input-focus" id="telefono" name="telefono">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="nivel">Nivel de Inglés:</label>
+                        <select class="form-control" id="nivel" name="nivel" required>
+                            <option value="" disabled selected>Seleccione el nivel</option>
+                            <option value="basico">Básico</option>
+                            <option value="intermedio">Intermedio</option>
+                            <option value="avanzado">Avanzado</option>
+                        </select>
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-custom btn-block">Registrar</button>
             </form>
@@ -65,6 +74,7 @@
                         <th>Fecha de Nacimiento</th>
                         <th>Correo Electrónico</th>
                         <th>Teléfono</th>
+                        <th>Nivel</th> <!-- Nueva columna para el nivel -->
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -83,23 +93,15 @@
         }
 
         $(document).ready(function() {
-            // solo acepte letras
-            function validarTexto(event) {
-                var input = event.target;
-                input.value = input.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
-            }
+            // Establecer la fecha máxima para la fecha de nacimiento a cinco años atrás
+            var hoy = new Date();
+            var fechaMinimaAno = hoy.getFullYear() - 8;
+            var fechaMaxima = new Date(fechaMinimaAno, 11, 31);
+            var fechaMaximaString = fechaMaxima.toISOString().substring(0, 10);
+            $('#fechaDeNacimiento').attr('max', fechaMaximaString);
 
-            // solo acepte numeros
-            function validarNumero(event) {
-                var input = event.target;
-                input.value = input.value.replace(/[^0-9]/g, '');
-            }
-
-            // validaciones a los campos vacios
-            $('#nombre').on('input', validarTexto);
-            $('#apellido').on('input', validarTexto);
-            $('#apellido2').on('input', validarTexto);
-            $('#telefono').on('input', validarNumero);
+            // Cargar estudiantes al cargar la página
+            cargarEstudiantes();
 
             function cargarEstudiantes() {
                 $.ajax({
@@ -109,25 +111,20 @@
                         $('#listaEstudiantes').empty();
                         estudiantes.forEach(function(estudiante) {
                             $('#listaEstudiantes').append(
-                                '<tr>' +
-                                '<td>' + estudiante.nombre + '</td>' +
-                                '<td>' + estudiante.apellido + '</td>' +
-                                '<td>' + estudiante.apellido2 + '</td>' +
-                                '<td>' + new Date(estudiante.fechaDeNacimiento).toLocaleDateString() + '</td>' +
-                                '<td>' + estudiante.email + '</td>' +
-                                '<td>' + estudiante.telefono + '</td>' +
-                                '<td>' +
-                                '<button class="btn btn-warning btn-sm editar-btn" data-id="' + estudiante._id + '">Editar</button> ' +
-                                '<button class="btn btn-danger btn-sm eliminar-btn" data-id="' + estudiante._id + '">Eliminar</button>' +
-                                '</td>' +
-                                '</tr>'
+                                `<tr>
+                                    <td>${estudiante.nombre}</td>
+                                    <td>${estudiante.apellido}</td>
+                                    <td>${estudiante.apellido2}</td>
+                                    <td>${new Date(estudiante.fechaDeNacimiento).toLocaleDateString()}</td>
+                                    <td>${estudiante.email}</td>
+                                    <td>${estudiante.telefono}</td>
+                                    <td>${estudiante.nivel}</td>  <!-- Mostrar el nivel -->
+                                    <td>
+                                        <button class="btn btn-warning btn-sm editar-btn" data-id="${estudiante._id}">Editar</button>
+                                        <button class="btn btn-danger btn-sm eliminar-btn" data-id="${estudiante._id}">Eliminar</button>
+                                    </td>
+                                </tr>`
                             );
-                        });
-                        $('.editar-btn').click(function() {
-                            editarEstudiante($(this).data('id'));
-                        });
-                        $('.eliminar-btn').click(function() {
-                            eliminarEstudiante($(this).data('id'));
                         });
                     },
                     error: function(error) {
@@ -137,52 +134,9 @@
                 });
             }
 
-            function eliminarEstudiante(id) {
-                $.ajax({
-                    type: 'DELETE',
-                    url: 'http://localhost:3000/estudiantes/' + id,
-                    success: function(response) {
-                        alert('Estudiante eliminado exitosamente');
-                        cargarEstudiantes();
-                    },
-                    error: function(error) {
-                        console.error('Error al eliminar al estudiante:', error);
-                        alert('Error al eliminar al estudiante');
-                    }
-                });
-            }
-
-            function editarEstudiante(id) {
-                $.ajax({
-                    type: 'GET',
-                    url: 'http://localhost:3000/estudiantes/' + id,
-                    success: function(estudiante) {
-                        $('#estudianteId').val(estudiante._id);
-                        $('#nombre').val(estudiante.nombre);
-                        $('#apellido').val(estudiante.apellido);
-                        $('#apellido2').val(estudiante.apellido2);
-                        $('#fechaDeNacimiento').val(new Date(estudiante.fechaDeNacimiento).toISOString().substring(0, 10));
-                        $('#email').val(estudiante.email);
-                        $('#telefono').val(estudiante.telefono);
-                        $('button[type="submit"]').text('Actualizar');
-                    },
-                    error: function(error) {
-                        console.error('Error al obtener los datos del estudiante:', error);
-                        alert('Error al obtener los datos del estudiante');
-                    }
-                });
-            }
-
-            $('#registroForm').submit(function(e) {
+            $('#registroForm').on('submit', function(e) {
                 e.preventDefault();
-                var formData = {
-                    nombre: $('#nombre').val(),
-                    apellido: $('#apellido').val(),
-                    apellido2: $('#apellido2').val(),
-                    fechaDeNacimiento: $('#fechaDeNacimiento').val(),
-                    email: $('#email').val(),
-                    telefono: $('#telefono').val()
-                };
+                var formData = $(this).serialize();
                 var id = $('#estudianteId').val();
                 var method = id ? 'PUT' : 'POST';
                 var url = id ? 'http://localhost:3000/estudiantes/' + id : 'http://localhost:3000/registro';
@@ -205,7 +159,53 @@
                 });
             });
 
-            cargarEstudiantes();
+            // Funciones para editar y eliminar
+            $(document).on('click', '.editar-btn', function() {
+                var id = $(this).data('id');
+                editarEstudiante(id);
+            });
+
+            $(document).on('click', '.eliminar-btn', function() {
+                var id = $(this).data('id');
+                eliminarEstudiante(id);
+            });
+
+            function editarEstudiante(id) {
+                $.ajax({
+                    type: 'GET',
+                    url: 'http://localhost:3000/estudiantes/' + id,
+                    success: function(estudiante) {
+                        $('#estudianteId').val(estudiante._id);
+                        $('#nombre').val(estudiante.nombre);
+                        $('#apellido').val(estudiante.apellido);
+                        $('#apellido2').val(estudiante.apellido2);
+                        $('#fechaDeNacimiento').val(new Date(estudiante.fechaDeNacimiento).toISOString().substring(0, 10));
+                        $('#email').val(estudiante.email);
+                        $('#telefono').val(estudiante.telefono);
+                        $('#nivel').val(estudiante.nivel);  // Setear el valor de nivel
+                        $('button[type="submit"]').text('Actualizar');
+                    },
+                    error: function(error) {
+                        console.error('Error al obtener los datos del estudiante:', error);
+                        alert('Error al obtener los datos del estudiante');
+                    }
+                });
+            }
+
+            function eliminarEstudiante(id) {
+                $.ajax({
+                    type: 'DELETE',
+                    url: 'http://localhost:3000/estudiantes/' + id,
+                    success: function(response) {
+                        alert('Estudiante eliminado exitosamente');
+                        cargarEstudiantes();
+                    },
+                    error: function(error) {
+                        console.error('Error al eliminar al estudiante:', error);
+                        alert('Error al eliminar al estudiante');
+                    }
+                });
+            }
         });
     </script>
 </body>

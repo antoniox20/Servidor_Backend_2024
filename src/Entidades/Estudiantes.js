@@ -24,6 +24,15 @@ const estudianteSchema = new mongoose.Schema({
   },
   telefono: { 
     type: String 
+  },
+  nivel: {
+    type: String,
+    enum: ['basico', 'intermedio', 'avanzado'], 
+    required: true
+  },
+  examenAsignado: {
+    type: String, 
+    default: null
   }
 });
 

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento de Ingresos</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./css/seguimiento.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Seguimiento de Ingresos de Estudiantes</h1>
+        </div>
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Correo Electrónico</th>
+                    <th>Teléfono</th>
+                    <th>Hora de Ingreso</th>
+                    <th>Acciones</th> <!-- Nueva columna para acciones -->
+                </tr>
+            </thead>
+            <tbody id="tablaSeguimiento">
+                <!-- Las filas se generarán dinámicamente con JavaScript -->
+            </tbody>
+        </table>
+
+        <!-- Botón de Volver -->
+        <div class="text-center mt-4">
+            <button class="btn btn-primary" onclick="volver()">Volver a la Página Principal</button>
+        </div>
+    </div>
+
+    <script>
+        // Función para redirigir a index.html
+        function volver() {
+            window.location.href = 'index.html';
+        }
+
+        // Cargar datos de seguimiento al cargar la página
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('http://localhost:3000/seguimiento');
+                const data = await response.json();
+
+                const tablaSeguimiento = document.getElementById('tablaSeguimiento');
+                tablaSeguimiento.innerHTML = ''; // Limpiar cualquier contenido anterior
+
+                data.forEach(estudiante => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${estudiante.nombre}</td>
+                        <td>${estudiante.apellido}</td>
+                        <td>${estudiante.email}</td>
+                        <td>${estudiante.telefono}</td>
+                        <td>${new Date(estudiante.horaIngreso).toLocaleString()}</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="eliminarSeguimiento('${estudiante._id}')">Eliminar</button>
+                        </td>
+                    `;
+                    tablaSeguimiento.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error al cargar los datos de seguimiento:', error);
+            }
+        });
+
+        // Función para eliminar un registro de seguimiento
+        async function eliminarSeguimiento(id) {
+            if (confirm('¿Estás seguro de que deseas eliminar este registro?')) {
+                try {
+                    const response = await fetch(`http://localhost:3000/seguimiento/${id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        alert('Registro eliminado exitosamente');
+                        location.reload(); // Recargar la página para actualizar la tabla
+                    } else {
+                        alert('Error al eliminar el registro');
+                    }
+                } catch (error) {
+                    console.error('Error al eliminar el registro:', error);
+                    alert('Error al eliminar el registro');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
