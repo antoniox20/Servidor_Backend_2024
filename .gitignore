@@ -4,3 +4,7 @@ token-app/
 
 /release-builds/EscuelaDeIdiomas-win32-x64/EscuelaDeIdiomas.exe
 /release-builds/MyApp-win32-x64/MyApp.exe
+release-builds/
+uploads/
+view/audios/
+view/img/
