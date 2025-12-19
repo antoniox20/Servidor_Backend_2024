@@ -5,150 +5,741 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reporte de Estudiantes</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="./css/reporte.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="./css/reporte.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </head>
 <body>
-    <div class="container" style="max-width: 100%;">
-        <div class="header">
-            <h1><i class="fas fa-file-alt info-icon"></i> Reporte de <span id="nombre"></span> <span id="apellido"></span></h1>
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1><i class="fas fa-chart-bar"></i> Generación de Reportes</h1>
+            <button class="btn btn-primary" onclick="goBack()">Volver</button>
         </div>
-        <div class="subheader">
-            <h2><i class="fas fa-user info-icon"></i> Información Personal</h2>
+
+        <!-- Tarjetas para cada filtro -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <div class="card filtro-card" data-target="#filtroEstado">
+                    <div class="card-body text-center">
+                        <i class="fas fa-filter fa-3x"></i>
+                        <h5 class="card-title">Buscar Aprobado/Reprobado</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card filtro-card" data-target="#filtroLibro">
+                    <div class="card-body text-center">
+                        <i class="fas fa-book fa-3x"></i>
+                        <h5 class="card-title">Buscar por Libro</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card filtro-card" data-target="#filtroNombre">
+                    <div class="card-body text-center">
+                        <i class="fas fa-user fa-3x"></i>
+                        <h5 class="card-title">Buscar por Nombre</h5>
+                    </div>
+                </div>
+            </div>
         </div>
-        <table class="table table-bordered table-hover">
-            <thead>
-                <tr>
-                    <th><i class="fas fa-user"></i> Nombre</th>
-                    <th><i class="fas fa-user"></i> Apellido</th>
-                    <th><i class="fas fa-user"></i> Segundo Apellido</th>
-                    <th><i class="fas fa-calendar-alt"></i> Fecha de Nacimiento</th>
-                    <th><i class="fas fa-envelope"></i> Email</th>
-                    <th><i class="fas fa-phone"></i> Teléfono</th>
-                </tr>
-            </thead>
-            <tbody id="estudiantes-body">
-                <!-- Información de estudiantes -->
-            </tbody>
-        </table>
-        <div class="subheader">
-            <h2><i class="fas fa-clipboard-check info-icon"></i> Notas de Exámenes</h2>
+
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <div class="card filtro-card" data-target="#filtroTema">
+                    <div class="card-body text-center">
+                        <i class="fas fa-file-alt fa-3x"></i>
+                        <h5 class="card-title">Buscar por Tema</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card filtro-card" data-target="#filtroGraficos">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-pie fa-3x"></i>
+                        <h5 class="card-title">Mostrar Gráficos</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card filtro-card" data-target="#filtroInscritos">
+                    <div class="card-body text-center">
+                        <i class="fas fa-users fa-3x"></i>
+                        <h5 class="card-title">Ver Inscritos</h5>
+                    </div>
+                </div>
+            </div>
         </div>
-        <table class="table table-bordered table-hover">
-            <thead>
-                <tr>
-                    <th><i class="fas fa-key"></i> Token</th>
-                    <th><i class="fas fa-check"></i> Correctas</th>
-                    <th><i class="fas fa-list"></i> Total</th>
-                    <th><i class="fas fa-clipboard-check"></i> Nota</th>
-                </tr>
-            </thead>
-            <tbody id="resultados-body">
-                <!-- Resultados de exámenes -->
-            </tbody>
-        </table>
-        <div class="subheader">
-            <h2><i class="fas fa-book info-icon"></i> Detalles del Examen</h2>
+
+        <!-- Filtros que se muestran al hacer clic en las tarjetas -->
+        <div id="filtroEstado" class="filtro-contenido" style="display:none;">
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">Buscar por Estado</div>
+                <div class="card-body">
+                    <select id="aprobadoReprobado" class="form-control">
+                        <option value="">Seleccionar estado</option>
+                        <option value="aprobado">Aprobados</option>
+                        <option value="reprobado">Reprobados</option>
+                    </select>
+                </div>
+            </div>
         </div>
-        <table class="table table-bordered table-hover">
-            <thead>
-                <tr>
-                    <th><i class="fas fa-key"></i> Token</th>
-                    <th><i class="fas fa-book"></i> Título</th>
-                    <th><i class="fas fa-info-circle"></i> Descripción</th>
-                    <th><i class="fas fa-book"></i> Tema</th>
-                    <th><i class="fas fa-book"></i> Libro</th>
-                    <th><i class="fas fa-signal"></i> Dificultad</th>
-                    <th><i class="fas fa-clock"></i> Tiempo (minutos)</th>
-                    <th><i class="fas fa-calendar-alt"></i> Fecha de Creación</th>
-                </tr>
-            </thead>
-            <tbody id="examenes-body">
-                <!-- Detalles de exámenes -->
-            </tbody>
-        </table>
-        <div class="subheader">
-            <h2><i class="fas fa-book info-icon"></i> Libros Utilizados en los Exámenes</h2>
+
+        <div id="filtroLibro" class="filtro-contenido" style="display:none;">
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">Buscar por Libro</div>
+                <div class="card-body">
+                    <select id="libroSelect" class="form-control">
+                        <option value="">Seleccionar libro</option>
+                        <option value="1">Libro 1</option>
+                        <option value="2">Libro 2</option>
+                        <option value="3">Libro 3</option>
+                        <option value="4">Libro 4</option>
+                        <option value="5">Libro 5</option>
+                        <option value="6">Libro 6</option>
+                        <option value="7">Libro 7</option>
+                        <option value="8">Libro 8</option>
+                        <option value="9">Libro 9</option>
+                        <option value="10">Libro 10</option>
+                        <option value="11">Libro 11</option>
+                        <option value="12">Libro 12</option>
+                        <option value="13">Libro 13</option>
+                        <option value="14">Libro 14</option>
+                        <option value="15">Libro 15</option>
+                        <option value="16">Libro 16</option>
+                        <option value="17">Libro 17</option>
+                        <option value="18">Libro 18</option>
+                        <option value="19">Libro 19</option>
+                        <option value="20">Libro 20</option>
+                        <option value="21">Libro 21</option>
+                        <option value="22">Libro 22</option>
+                        <option value="23">Libro 23</option>
+                        <option value="24">Libro 24</option>
+                        <option value="25">Libro 25</option>
+                        <option value="26">Libro 26</option>
+                        <option value="27">Libro 27</option>
+                        <option value="28">Libro 28</option>
+                        <option value="29">Libro 29</option>
+                        <option value="30">Libro 30</option>
+                    </select>
+                </div>
+            </div>
         </div>
-        <table class="table table-bordered table-hover">
-            <thead>
-                <tr>
-                    <th><i class="fas fa-book"></i> Libro</th>
-                    <th><i class="fas fa-list"></i> Cantidad de Exámenes</th>
-                </tr>
-            </thead>
-            <tbody id="libros-body">
-                <!-- Libros utilizados -->
-            </tbody>
-        </table>
-        <div class="print-btn">
-            <button onclick="window.print()"><i class="fas fa-print"></i> Imprimir Reporte</button>
+
+        <div id="filtroNombre" class="filtro-contenido" style="display:none;">
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">Buscar Estudiante por Nombre Completo</div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <input type="text" id="studentName" class="form-control" placeholder="Ingrese el Nombre">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" id="studentApellido" class="form-control" placeholder="Ingrese el Apellido Paterno">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" id="studentApellido2" class="form-control" placeholder="Ingrese el Apellido Materno">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="filtroTema" class="filtro-contenido" style="display:none;">
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">Buscar por Tema</div>
+                <div class="card-body">
+                    <input type="text" id="temaExamen" class="form-control" placeholder="Ingrese el Tema del Examen">
+                </div>
+            </div>
+        </div>
+
+        <!-- Nueva sección para gráficos -->
+        <div id="filtroGraficos" class="filtro-contenido" style="display:none;">
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white text-center">
+                    <h2>Cantidad de estudiantes</h2>
+                </div>
+                <div class="card-body">
+                    <h4 class="text-center">Resultados Aprobados/Reprobados</h4>
+                    <canvas id="resultadoChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Gráficos adicionales: Libros, Niveles y Estudiantes por Nivel -->
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white text-center">
+                    <h2>Cantidad de libros utilizados</h2>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <h4 class="text-center">Libros Utilizados</h4>
+                        <canvas id="librosChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h4 class="text-center">Exámenes por Nivel</h4>
+                        <canvas id="nivelesChart"></canvas>
+                    </div>
+                    <div class="card-header bg-primary text-white text-center">
+                        <h2>Estudiantes por Nivel</h2>
+                    </div>
+                    <div class="chart-container">
+                        <h4 class="text-center">Estudiantes por Nivel</h4>
+                        <canvas id="estudiantesNivelChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Resultados -->
+        <div class="card mb-3 filtro-resultado" style="display:none;" id="tablaResultados">
+            <div class="card-header bg-primary text-white text-center">
+                <h2>Resultados de Estudiantes</h2>
+            </div>
+            <div class="card-body">
+                <table id="reporteTable" class="table table-hover table-bordered">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Paterno</th>
+                            <th>Materno</th>
+                            <th>Correctas</th>
+                            <th>Incorrectas</th>
+                            <th>Total</th>
+                            <th>Nota</th>
+                            <th>Estado</th>
+                            <th>Hora de Inicio</th>
+                            <th>Hora de Fin</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reporteTableBody">
+                        <!-- Filas dinámicas aquí -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tabla de Registros -->
+        <div class="card mb-3 filtro-resultado" style="display:none;" id="tablaRegistros">
+            <div class="card-header bg-primary text-white text-center">
+                <h2>Registros de Exámenes y Resultados</h2>
+            </div>
+            <div class="card-body">
+                <table id="registroTable" class="table table-hover table-bordered">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Nombre del Estudiante</th>
+                            <th>Apellido Paterno</th>
+                            <th>Apellido Materno</th>
+                            <th>Tema del Examen</th>
+                            <th>Libro</th>
+                            <th>Nivel</th>
+                            <th>Correctas</th>
+                            <th>Incorrectas</th>
+                            <th>Nota</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="registroTableBody">
+                        <!-- Filas dinámicas aquí -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tabla de Inscritos -->
+        <div id="filtroInscritos" class="filtro-contenido" style="display:none;">
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white text-center">
+                    <h2>Estudiantes inscritos para evaluar</h2>
+                </div>
+                <div class="card-body">
+                    <table id="tablaEstudiantes" class="table table-hover table-bordered">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Apellido Paterno</th>
+                                <th>Apellido Materno</th>
+                                <th>Email</th>
+                                <th>Teléfono</th>
+                                <th>Nivel</th>
+                                <th>Libro</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaEstudiantesBody">
+                            <!-- Filas dinámicas aquí -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botón para Descargar PDF -->
+        <div class="text-right mb-3">
+            <button id="descargarReporteBtn" class="btn btn-danger">
+                <i class="fas fa-file-pdf"></i> Guardar PDF
+            </button>
         </div>
     </div>
 
     <script>
-        function cargarDatos(data) {
-            document.getElementById('nombre').innerText = data.nombre;
-            document.getElementById('apellido').innerText = data.apellido;
+        let estudianteSeleccionado = null;
 
-            // Cargar estudiantes
-            const estudiantesBody = document.getElementById('estudiantes-body');
-            data.estudiantes.forEach(est => {
-                estudiantesBody.innerHTML += `
-                    <tr>
-                        <td>${est.nombre}</td>
-                        <td>${est.apellido}</td>
-                        <td>${est.apellido2}</td>
-                        <td>${new Date(est.fechaDeNacimiento).toISOString().split('T')[0]}</td>
-                        <td>${est.email}</td>
-                        <td>${est.telefono}</td>
-                    </tr>
-                `;
-            });
+        function goBack() {
+            window.location.href = 'index.html';
+        }
 
-            // Cargar resultados
-            const resultadosBody = document.getElementById('resultados-body');
-            data.resultados.forEach(resultado => {
-                resultadosBody.innerHTML += `
-                    <tr>
-                        <td>${resultado.token}</td>
-                        <td>${resultado.correctas}</td>
-                        <td>${resultado.total}</td>
-                        <td>${resultado.nota}</td>
-                    </tr>
-                `;
-            });
+        function loadResultados(estado = '') {
+            estudianteSeleccionado = null;
+            $.ajax({
+                type: 'GET',
+                url: `http://localhost:3000/obtenerResultados`,
+                success: function(resultados) {
+                    const reporteTableBody = $('#reporteTableBody');
+                    reporteTableBody.empty();
 
-            // Cargar exámenes
-            const examenesBody = document.getElementById('examenes-body');
-            data.examenes.forEach(examen => {
-                const tiempoMinutos = (examen.tiempo / 60).toFixed(2); // Convertir tiempo a minutos y redondear a 2 decimales
-                examenesBody.innerHTML += `
-                    <tr>
-                        <td>${examen.token}</td>
-                        <td>${examen.titulo}</td>
-                        <td>${examen.descripcion}</td>
-                        <td>${examen.tema}</td>
-                        <td>${examen.libro}</td>
-                        <td>${examen.dificultad}</td>
-                        <td>${tiempoMinutos}</td>
-                        <td>${new Date(examen.fechaCreacion).toISOString().split('T')[0]}</td>
-                    </tr>
-                `;
-            });
+                    if (estado) {
+                        const filtrados = resultados.filter(resultado => {
+                            if (estado === 'aprobado') return resultado.nota >= 6;
+                            if (estado === 'reprobado') return resultado.nota < 6;
+                            return true;
+                        });
 
-            // Cargar libros
-            const librosBody = document.getElementById('libros-body');
-            Object.keys(data.librosConteo).forEach(libro => {
-                librosBody.innerHTML += `
-                    <tr>
-                        <td>${libro}</td>
-                        <td>${data.librosConteo[libro]}</td>
-                    </tr>
-                `;
+                        if (filtrados.length === 0) {
+                            const emptyRow = `<tr><td colspan="10" class="text-center">No se encontraron resultados</td></tr>`;
+                            reporteTableBody.append(emptyRow);
+                        } else {
+                            filtrados.forEach(resultado => {
+                                const incorrectas = resultado.total - resultado.correctas;
+                                const estado = resultado.nota >= 6 ? 'Aprobado' : 'Reprobado';
+                                const resultadoRow = `
+                                    <tr>
+                                        <td>${resultado.nombre}</td>
+                                        <td>${resultado.apellido}</td>
+                                        <td>${resultado.apellido2}</td>
+                                        <td>${resultado.correctas}</td>
+                                        <td>${incorrectas}</td>
+                                        <td>${resultado.total}</td>
+                                        <td>${resultado.nota}</td>
+                                        <td>${estado}</td>
+                                        <td>${resultado.horaInicio ? new Date(resultado.horaInicio).toLocaleTimeString() : 'N/A'}</td>
+                                        <td>${resultado.horaFin ? new Date(resultado.horaFin).toLocaleTimeString() : 'N/A'}</td>
+                                    </tr>
+                                `;
+                                reporteTableBody.append(resultadoRow);
+                            });
+                        }
+
+                        actualizarGrafico(resultados);
+                    }
+
+                    actualizarGraficoLibros();
+                    //actualizarGraficoNiveles();
+                    actualizarGraficoEstudiantesPorNivel();
+                },
+                error: function(error) {
+                    alert('Error al cargar los resultados');
+                }
             });
         }
+
+         // Función para buscar estudiantes por nombre dinámicamente
+         function buscarPorNombre() {
+            const nombre = $('#studentName').val();
+            const apellido = $('#studentApellido').val();
+            const apellido2 = $('#studentApellido2').val();
+
+            if (!nombre && !apellido && !apellido2) return;
+
+            $.ajax({
+                type: 'GET',
+                url: `http://localhost:3000/evaluacionesEstudiante`,
+                data: { nombre: nombre, apellido: apellido, apellido2: apellido2 },
+                success: function(evaluaciones) {
+                    const reporteTableBody = $('#reporteTableBody');
+                    reporteTableBody.empty();
+
+                    if (!evaluaciones.length) {
+                        reporteTableBody.append(`<tr><td colspan="10" class="text-center">No se encontraron resultados</td></tr>`);
+                    } else {
+                        evaluaciones.forEach(resultado => {
+                            const incorrectas = resultado.total - resultado.correctas;
+                            const estado = resultado.nota >= 6 ? 'Aprobado' : 'Reprobado';
+                            const resultadoRow = `
+                                <tr>
+                                    <td>${resultado.nombre}</td>
+                                    <td>${resultado.apellido}</td>
+                                    <td>${resultado.apellido2}</td>
+                                    <td>${resultado.correctas}</td>
+                                    <td>${incorrectas}</td>
+                                    <td>${resultado.total}</td>
+                                    <td>${resultado.nota}</td>
+                                    <td>${estado}</td>
+                                    <td>${resultado.horaInicio ? new Date(resultado.horaInicio).toLocaleTimeString() : 'N/A'}</td>
+                                    <td>${resultado.horaFin ? new Date(resultado.horaFin).toLocaleTimeString() : 'N/A'}</td>
+                                </tr>
+                            `;
+                            reporteTableBody.append(resultadoRow);
+                        });
+                    }
+
+                    $('#tablaResultados').show(); // Mostrar la tabla de resultados
+                },
+                error: function(error) {
+                    alert('Error al buscar las evaluaciones');
+                }
+            });
+        }
+
+        function loadRegistros(libro = '', tema = '') {
+            estudianteSeleccionado = null;
+            const url = `http://localhost:3000/obtenerRegistros`;
+
+            $.ajax({
+                type: 'GET',
+                url: url,
+                success: function(registros) {
+                    const registroTableBody = $('#registroTableBody');
+                    registroTableBody.empty();
+
+                    let filtrados = registros;
+                    if (libro) {
+                        filtrados = registros.filter(registro => registro.examen.libro === libro);
+                    }
+                    if (tema) {
+                        filtrados = filtrados.filter(registro => registro.examen.tema.toLowerCase().includes(tema.toLowerCase()));
+                    }
+
+                    if (filtrados.length === 0) {
+                        const emptyRow = `<tr><td colspan="11" class="text-center">No se encontraron registros</td></tr>`;
+                        registroTableBody.append(emptyRow);
+                    } else {
+                        filtrados.forEach(registro => {
+                            const incorrectas = registro.resultado.total - registro.resultado.correctas;
+                            const estado = registro.resultado.nota >= 6 ? 'Aprobado' : 'Reprobado';
+
+                            const registroRow = `
+                                <tr>
+                                    <td>${registro.resultado.nombre}</td>
+                                    <td>${registro.resultado.apellido}</td>
+                                    <td>${registro.resultado.apellido2 || ''}</td>
+                                    <td>${registro.examen.tema}</td>
+                                    <td>${registro.examen.libro}</td>
+                                    <td>${registro.examen.dificultad || 'N/A'}</td>
+                                    <td>${registro.resultado.correctas}</td>
+                                    <td>${incorrectas}</td>
+                                    <td>${registro.resultado.nota}</td>
+                                    <td>${estado}</td>
+                                </tr>
+                            `;
+                            registroTableBody.append(registroRow);
+                        });
+                    }
+                },
+                error: function(error) {
+                    alert('Error al cargar los registros');
+                }
+            });
+        }
+
+        // Función para cargar estudiantes inscritos
+        function cargarEstudiantesInscritos() {
+            $.ajax({
+                type: 'GET',
+                url: `http://localhost:3000/estudiantesInscritos`, // Ruta del backend
+                success: function(estudiantes) {
+                    const tablaEstudiantesBody = $('#tablaEstudiantesBody');
+                    tablaEstudiantesBody.empty(); // Limpiar la tabla antes de agregar nuevos datos
+
+                    if (estudiantes.length === 0) {
+                        const emptyRow = `<tr><td colspan="6" class="text-center">No hay estudiantes inscritos</td></tr>`;
+                        tablaEstudiantesBody.append(emptyRow);
+                    } else {
+                        estudiantes.forEach(estudiante => {
+                            const estudianteRow = `
+                                <tr>
+                                    <td>${estudiante.nombre}</td>
+                                    <td>${estudiante.apellido}</td>
+                                    <td>${estudiante.apellido2}</td>
+                                    <td>${estudiante.email}</td>
+                                    <td>${estudiante.telefono}</td>
+                                    <td>${estudiante.nivel}</td>
+                                    <td>${estudiante.libro}</td>
+                                </tr>
+                            `;
+                            tablaEstudiantesBody.append(estudianteRow);
+                        });
+                    }
+                },
+                error: function(error) {
+                    alert('Error al cargar los estudiantes inscritos');
+                }
+            });
+        }
+
+        function generarReporte() {
+    const estado = $('#aprobadoReprobado').val();
+    const nombre = $('#studentName').val();
+    const apellido = $('#studentApellido').val();
+    const apellido2 = $('#studentApellido2').val();
+    const libro = $('#libroSelect').val();
+    const tema = $('#temaExamen').val();
+
+    // Verificar si estamos en la vista de inscritos
+    const esVistaInscritos = $('#filtroInscritos').is(':visible'); // Detectar si la vista de inscritos está activa
+
+    // Crear una URL con los filtros que no están vacíos
+    let queryParams = [];
+
+    // Añadir solo los filtros que tienen un valor
+    if (estado) queryParams.push(`estado=${estado}`);
+    if (nombre) queryParams.push(`nombre=${nombre}`);
+    if (apellido) queryParams.push(`apellido=${apellido}`);
+    if (apellido2) queryParams.push(`apellido2=${apellido2}`);
+    if (libro) queryParams.push(`libro=${libro}`);
+    if (tema) queryParams.push(`tema=${tema}`);
+
+    // Si estamos en la vista de inscritos, añadimos un parámetro adicional
+    if (esVistaInscritos) {
+        queryParams.push(`incluirInscritos=true`);
+    }
+
+    // Verificar que al menos un filtro haya sido seleccionado o sea la vista de inscritos
+    if (queryParams.length === 0 && !esVistaInscritos) {
+        alert('Por favor, selecciona al menos un filtro para generar el reporte.');
+        return;
+    }
+
+    // Construir la URL de generación de reporte con los filtros
+    const queryString = queryParams.join('&');
+    window.location.href = `http://localhost:3000/generarReporte?${queryString}`;
+}
+
+        function actualizarGrafico(resultados) {
+            const aprobados = resultados.filter(r => r.nota >= 6).length;
+            const reprobados = resultados.filter(r => r.nota < 6).length;
+
+            const ctx = document.getElementById('resultadoChart').getContext('2d');
+            const data = {
+                labels: ['Aprobados', 'Reprobados'],
+                datasets: [{
+                    label: 'Cantidad de Estudiantes',
+                    data: [aprobados, reprobados],
+                    backgroundColor: ['rgba(75, 192, 192, 0.5)', 'rgba(255, 99, 132, 0.5)'],
+                    borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)'],
+                    borderWidth: 2
+                }]
+            };
+
+            new Chart(ctx, {
+    type: 'bar',
+    data: data,
+    options: {
+        plugins: {
+            legend: {
+                display: false // Oculta la leyenda
+            }
+        }
+    }
+});
+        }
+
+        function actualizarGraficoLibros() {
+    $.ajax({
+        type: 'GET',
+        url: 'http://localhost:3000/obtenerLibrosUtilizados',
+        success: function(libros) {
+            const ctx = document.getElementById('librosChart').getContext('2d');
+            const data = {
+                labels: libros.map(libro => libro.libro),
+                datasets: [{
+                    label: 'Cantidad de Libros utilizados',
+                    data: libros.map(libro => libro.cantidad),
+                    backgroundColor: [
+                        'rgba(153, 102, 255, 0.5)',
+                        'rgba(255, 159, 64, 0.5)',
+                        'rgba(54, 162, 235, 0.5)',
+                        'rgba(255, 206, 86, 0.5)'
+                    ],
+                    borderColor: [
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            };
+
+            new Chart(ctx, {
+    type: 'bar',
+    data: data,
+    options: {
+        plugins: {
+            legend: {
+                display: false // Oculta la leyenda sin afectar el tamaño
+            }
+        },
+        responsive: true,
+        maintainAspectRatio: false, // Esto asegura que el gráfico se expanda sin afectar su tamaño
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+        },
+        error: function(error) {
+            console.error('Error al cargar las estadísticas de libros:', error);
+        }
+    });
+}
+
+        function actualizarGraficoNiveles() {
+            $.ajax({
+                type: 'GET',
+                url: 'http://localhost:3000/obtenerExamenesPorNivel',
+                success: function(niveles) {
+                    const nivelLabels = niveles.map(nivel => {
+                        if (nivel._id === 'facil') return 'Básico';
+                        if (nivel._id === 'medio') return 'Intermedio';
+                        if (nivel._id === 'dificil') return 'Avanzado';
+                        return 'Desconocido';
+                    });
+
+                    const nivelData = niveles.map(nivel => nivel.count);
+
+                    const ctx = document.getElementById('nivelesChart').getContext('2d');
+                    const data = {
+                        labels: nivelLabels,
+                        datasets: [{
+                            label: 'Cantidad de Exámenes',
+                            data: nivelData,
+                            backgroundColor: [
+                                'rgba(255, 206, 86, 0.5)', // Básico
+                                'rgba(54, 162, 235, 0.5)',  // Intermedio
+                                'rgba(255, 99, 132, 0.5)'   // Avanzado
+                            ],
+                            borderColor: [
+                                'rgba(255, 206, 86, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 99, 132, 1)'
+                            ],
+                            borderWidth: 2
+                        }]
+                    };
+
+                    new Chart(ctx, {
+                        type: 'pie',
+                        data: data
+                    });
+                },
+                error: function(error) {
+                    console.error('Error al obtener los niveles:', error);
+                    alert('Error al cargar los datos de los niveles');
+                }
+            });
+        }
+
+        function actualizarGraficoEstudiantesPorNivel() {
+            $.ajax({
+                type: 'GET',
+                url: 'http://localhost:3000/obtenerEstudiantesPorNivel',
+                success: function(data) {
+                    const ctx = document.getElementById('estudiantesNivelChart').getContext('2d');
+                    const nivelLabels = ['Básico', 'Intermedio', 'Avanzado'];
+                    const nivelData = [
+                        data.basico || 0,
+                        data.intermedio || 0,
+                        data.avanzado || 0
+                    ];
+
+                    const chartData = {
+                        labels: nivelLabels,
+                        datasets: [{
+                            label: 'Estudiantes por Nivel',
+                            data: nivelData,
+                            backgroundColor: [
+                                'rgba(255, 206, 86, 0.5)', // Básico
+                                'rgba(54, 162, 235, 0.5)',  // Intermedio
+                                'rgba(255, 99, 132, 0.5)'   // Avanzado
+                            ],
+                            borderColor: [
+                                'rgba(255, 206, 86, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 99, 132, 1)'
+                            ],
+                            borderWidth: 2
+                        }]
+                    };
+
+                    new Chart(ctx, {
+                         type: 'bar',
+                            data: chartData,
+                            options: {
+                            plugins: {
+                            legend: {
+                            display: false // Oculta la leyenda
+                            }
+                        }
+                    }
+                });
+                },
+                error: function(error) {
+                    console.error('Error al cargar los datos de estudiantes por nivel:', error);
+                    alert('Error al cargar los datos de estudiantes por nivel');
+                }
+            });
+        }
+
+        // Mostrar el contenido de los filtros al hacer clic en una tarjeta
+        $(document).ready(function(){
+            $('.filtro-card').on('click', function() {
+                const target = $(this).data('target');
+                // Ocultar todos los filtros y resultados antes de mostrar uno nuevo
+                $('.filtro-contenido').hide();
+                $('.filtro-resultado').hide();
+                $(target).show();
+            });
+
+            // Cargar los filtros cuando se selecciona un valor
+            $('#libroSelect').change(function() {
+                const libroSeleccionado = $(this).val();
+                const temaSeleccionado = $('#temaExamen').val();
+                loadRegistros(libroSeleccionado, temaSeleccionado);
+                $('#tablaRegistros').show();  // Mostrar la tabla de registros
+            });
+
+            $('#temaExamen').on('input', function() {
+                const temaSeleccionado = $(this).val();
+                const libroSeleccionado = $('#libroSelect').val();
+                loadRegistros(libroSeleccionado, temaSeleccionado);
+                $('#tablaRegistros').show();  // Mostrar la tabla de registros
+            });
+
+            $('#aprobadoReprobado').change(function() {
+                const estado = $(this).val();
+                loadResultados(estado);
+                $('#tablaResultados').show();  // Mostrar la tabla de resultados
+            });
+
+            $('#studentName, #studentApellido, #studentApellido2').on('input', function() {
+                buscarPorNombre();  // Llamar a la función de búsqueda cada vez que el usuario escribe
+            });
+
+            // Mostrar la tabla de estudiantes inscritos cuando se haga clic en la tarjeta
+            $('.filtro-card[data-target="#filtroInscritos"]').on('click', function() {
+                cargarEstudiantesInscritos();
+                $('#filtroInscritos').show(); // Mostrar la sección
+                $('.filtro-contenido').not('#filtroInscritos').hide(); // Ocultar las otras secciones
+            });
+
+            $('#descargarReporteBtn').click(generarReporte);
+        });
+
     </script>
-    <script id="cargar-datos"></script>
 </body>
 </html>

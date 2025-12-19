@@ -1,0 +1,261 @@
+appExpress.get('/generarReporte', async (req, res) => {
+  console.log(req.query);
+  const { estado, nombre, apellido, apellido2, libro, tema, incluirInscritos } = req.query;
+
+  const horaInicio = new Date();
+
+  try {
+    let query = {};
+    let resultadosGenerales = [];
+    let registrosLibroTema = [];
+    let estudiantes = [];
+
+    // Dependiendo de los parámetros del filtro, generamos un tipo de reporte
+    let isFilteredByEstudiantes = incluirInscritos === 'true';
+    let isFilteredByLibro = libro || tema;
+    let isFilteredByEstado = estado || nombre || apellido || apellido2;
+
+    // Filtrar por estudiantes inscritos
+    if (isFilteredByEstudiantes) {
+      estudiantes = await Estudiante.find(); // Obtener todos los estudiantes si se solicitó
+    }
+
+    // Filtrar por libro o tema
+    if (isFilteredByLibro) {
+      registrosLibroTema = await Registro.find().populate('examen').populate('resultado');
+
+      if (libro) {
+        registrosLibroTema = registrosLibroTema.filter(registro => registro.examen.libro === libro);
+      }
+      if (tema) {
+        registrosLibroTema = registrosLibroTema.filter(registro => registro.examen.tema.toLowerCase().includes(tema.toLowerCase()));
+      }
+    }
+
+    // Filtrar por nombre, apellido, estado
+    if (isFilteredByEstado) {
+      resultadosGenerales = await Resultado.find();  // Esto traerá todos los resultados sin filtrar
+
+      // Aplicar filtros por nombre, apellido o estado
+      if (nombre) {
+        resultadosGenerales = resultadosGenerales.filter(resultado => resultado.nombre.toLowerCase().includes(nombre.toLowerCase()));
+      }
+      if (apellido) {
+        resultadosGenerales = resultadosGenerales.filter(resultado => resultado.apellido.toLowerCase().includes(apellido.toLowerCase()));
+      }
+      if (apellido2) {
+        resultadosGenerales = resultadosGenerales.filter(resultado => resultado.apellido2 && resultado.apellido2.toLowerCase().includes(apellido2.toLowerCase()));
+      }
+      if (estado === 'aprobado') {
+        resultadosGenerales = resultadosGenerales.filter(resultado => resultado.nota >= 6);  // Filtrar aprobados
+      } else if (estado === 'reprobado') {
+        resultadosGenerales = resultadosGenerales.filter(resultado => resultado.nota < 6);  // Filtrar reprobados
+      }
+    }
+
+    // Validar que al menos haya resultados
+    if (resultadosGenerales.length === 0 && registrosLibroTema.length === 0 && estudiantes.length === 0) {
+      const doc = new PDFDocument({ margin: 30 });
+      doc.fontSize(14).text('No se encontraron resultados ni estudiantes inscritos', { align: 'center' });
+      doc.end();
+      return doc.pipe(res);
+    }
+
+    // Crear un nuevo PDF y reiniciar el contenido
+    const doc = new PDFDocument({ margin: 0 });
+    let filename = 'Reporte.pdf';
+    let title = 'Reporte de Evaluaciones';
+
+    // Definir el título y nombre del archivo basado en los parámetros
+    if (isFilteredByEstudiantes) {
+      filename = 'Reporte_Inscritos.pdf';
+      title = 'Reporte de Estudiantes Inscritos';
+    } else if (isFilteredByLibro) {
+      filename = `Reporte_Libro_${libro || tema}.pdf`;
+      title = `Reporte de Evaluaciones por ${libro ? 'Libro' : 'Tema'}`;
+    } else if (isFilteredByEstado) {
+      filename = `Reporte_${estado || nombre || apellido}.pdf`;
+      title = `Reporte de Estudiantes ${estado ? estado.charAt(0).toUpperCase() + estado.slice(1) : 'por Nombre'}`;
+    }
+
+    filename = encodeURIComponent(filename);
+    res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-type', 'application/pdf');
+
+    // Añadir un borde oscuro alrededor del contenido
+    doc.rect(20, 20, doc.page.width - 40, doc.page.height - 40).strokeColor('#004080').lineWidth(10).stroke();
+    doc.fillColor('#004080').polygon([20, 20], [60, 20], [20, 60]).fill();
+    doc.fillColor('#004080').polygon([doc.page.width - 20, doc.page.height - 20], [doc.page.width - 60, doc.page.height - 20], [doc.page.width - 20, doc.page.height - 60]).fill();
+
+    // Posicionar el escudo
+    const escudoPath = path.join(__dirname, 'view', 'img', 'EIE_ESCUDO.png');
+    doc.image(escudoPath, 70, 70, { width: 70 });
+    doc.font('Helvetica-Bold').fontSize(18).fillColor('black').text('Escuela de Idiomas del Ejército', 160, 90);
+    doc.moveDown(2);
+    doc.font('Helvetica-Bold').fontSize(20).fillColor('black').text(title, 70, 160, { align: 'left' });
+    doc.moveDown(1);
+
+    // Generar la tabla correcta según el filtro
+    if (isFilteredByEstudiantes) {
+      doc.fontSize(14).text('Estudiantes Inscritos:', { align: 'center' });
+      generateEstudiantesTable(doc, estudiantes);  // Asegúrate de que esta función esté definida
+    } else if (isFilteredByLibro) {
+      generateLibroTemaTable(doc, registrosLibroTema);  // Asegúrate de que esta función esté definida
+    } else if (isFilteredByEstado) {
+      generateStyledTable(doc, resultadosGenerales);  // Asegúrate de que esta función esté definida
+    }
+
+    // Agregar pie de página con fecha y hora
+    const horaFin = new Date();
+    const fechaActual = new Date().toLocaleDateString();
+    const horaInicioTexto = horaInicio.toLocaleTimeString();
+    const horaFinTexto = horaFin.toLocaleTimeString();
+    doc.fontSize(12).fillColor('black')
+      .text(`Fecha: ${fechaActual}`, doc.page.width - 150, doc.page.height - 80);
+    doc.fontSize(10).fillColor('black')
+      .text(`Reporte generado por Admin`, 30, doc.page.height - 50)
+      .text(`Generado el: ${fechaActual} a las ${horaFinTexto}`, 30, doc.page.height - 35);
+
+    // Finalizar el PDF
+    doc.end();
+    doc.pipe(res);
+  } catch (error) {
+    console.error('Error al generar el reporte:', error);
+    res.status(500).send('Error al generar el reporte');
+  }
+});
+
+function generateEstudiantesTable(doc, estudiantes) {
+  const tableTop = 250;  // Cambiar de 250 a 100 para comenzar más arriba si es necesario
+  const itemHeight = 20;
+  const cellWidths = [60, 60, 60, 150, 70, 70, 50];
+  const totalTableWidth = cellWidths.reduce((a, b) => a + b, 0);
+  const leftMargin = (doc.page.width - totalTableWidth) / 2;
+
+  // Dibujar el encabezado de la tabla
+  doc.fontSize(12).fillColor('white').rect(leftMargin, tableTop, totalTableWidth, itemHeight).fill('#007bff');
+  const headers = ["Nombre", "Paterno", "Materno", "Email", "Teléfono", "Nivel", "Libro"];  // Encabezados incluyendo "Libro"
+  headers.forEach((header, i) => {
+      doc.fillColor('white').font('Helvetica-Bold').text(header, leftMargin + cellWidths.slice(0, i).reduce((a, b) => a + b, 0) + 5, tableTop + 5, { width: cellWidths[i], align: 'center' });
+  });
+
+  // Dibujar las filas de los estudiantes
+  estudiantes.forEach((estudiante, i) => {
+      const y = tableTop + (i + 1) * itemHeight;
+      if (i % 2 === 0) {
+          doc.fillColor('#f9f9f9').rect(leftMargin, y, totalTableWidth, itemHeight).fill();  // Alternar color en las filas
+      }
+
+      let xPosition = leftMargin;
+      doc.fillColor('#333333').font('Helvetica');
+
+      // Convertir todo a cadena usando toString() si es necesario
+      doc.text(estudiante.nombre, xPosition + 5, y + 5, { width: cellWidths[0], align: 'center' });
+      xPosition += cellWidths[0];
+      doc.text(estudiante.apellido, xPosition + 5, y + 5, { width: cellWidths[1], align: 'center' });
+      xPosition += cellWidths[1];
+      doc.text(estudiante.apellido2 || '', xPosition + 5, y + 5, { width: cellWidths[2], align: 'center' });
+      xPosition += cellWidths[2];
+      doc.text(estudiante.email.toString(), xPosition + 5, y + 5, { width: cellWidths[3], align: 'center' });  // Asegurar que el email es una cadena
+      xPosition += cellWidths[3];
+      doc.text(estudiante.telefono.toString(), xPosition + 5, y + 5, { width: cellWidths[4], align: 'center' });
+      xPosition += cellWidths[4];
+      doc.text(estudiante.nivel, xPosition + 5, y + 5, { width: cellWidths[5], align: 'center' });
+      xPosition += cellWidths[5];
+      doc.text(estudiante.libro || 'N/A', xPosition + 5, y + 5, { width: cellWidths[6], align: 'center' });  // Mostrar el libro o "N/A" si no existe
+  });
+}
+
+// Función para generar la tabla de resultados generales
+function generateStyledTable(doc, resultados) {
+  const tableTop = 250;
+  const itemHeight = 20;
+  const cellWidths = [70, 70, 70, 60, 60, 60, 50, 70];  // Anchos de cada celda, incluyendo Tiempo
+  const totalTableWidth = cellWidths.reduce((a, b) => a + b, 0);
+  const leftMargin = (doc.page.width - totalTableWidth) / 2;
+
+  doc.fontSize(12).fillColor('white').rect(leftMargin, tableTop, totalTableWidth, itemHeight).fill('#007bff');
+  const headers = ["Nombre", "Paterno", "Materno", "Correctas", "Incorrectas", "Total", "Nota", "Tiempo"];
+  headers.forEach((header, i) => {
+      doc.fillColor('white').font('Helvetica-Bold').text(header, leftMargin + cellWidths.slice(0, i).reduce((a, b) => a + b, 0) + 5, tableTop + 5, { width: cellWidths[i], align: 'center' });
+  });
+
+  resultados.forEach((resultado, i) => {
+      const y = tableTop + (i + 1) * itemHeight;
+      if (i % 2 === 0) {
+          doc.fillColor('#f9f9f9').rect(leftMargin, y, totalTableWidth, itemHeight).fill();
+      }
+
+      let xPosition = leftMargin;
+      doc.fillColor('#333333').font('Helvetica');
+
+      doc.text(resultado.nombre, xPosition + 5, y + 5, { width: cellWidths[0], align: 'center' });
+      xPosition += cellWidths[0];
+      doc.text(resultado.apellido, xPosition + 5, y + 5, { width: cellWidths[1], align: 'center' });
+      xPosition += cellWidths[1];
+      doc.text(resultado.apellido2 || '', xPosition + 5, y + 5, { width: cellWidths[2], align: 'center' });
+      xPosition += cellWidths[2];
+      doc.text(resultado.correctas.toString(), xPosition + 5, y + 5, { width: cellWidths[3], align: 'center' });
+      xPosition += cellWidths[3];
+      const incorrectas = resultado.total - resultado.correctas;
+      doc.text(incorrectas.toString(), xPosition + 5, y + 5, { width: cellWidths[4], align: 'center' });
+      xPosition += cellWidths[4];
+      doc.text(resultado.total.toString(), xPosition + 5, y + 5, { width: cellWidths[5], align: 'center' });
+      xPosition += cellWidths[5];
+      doc.text(resultado.nota.toString(), xPosition + 5, y + 5, { width: cellWidths[6], align: 'center' });
+      xPosition += cellWidths[6];
+      doc.text(resultado.tiempoTranscurrido.toString() + " min", xPosition + 5, y + 5, { width: cellWidths[7], align: 'center' });
+  });
+}
+
+// Función para generar la tabla de libro y tema
+function generateLibroTemaTable(doc, registros) {
+  const tableTop = 250;
+  const itemHeight = 20;
+  const cellWidths = [60, 50, 60, 50, 60, 60, 60, 60, 60, 60];  // Anchos para las columnas
+
+  const totalTableWidth = cellWidths.reduce((a, b) => a + b, 0);
+  const leftMargin = (doc.page.width - totalTableWidth) / 2;
+
+  // Dibujar el encabezado de la tabla
+  doc.fontSize(12).fillColor('white').rect(leftMargin, tableTop, totalTableWidth, itemHeight).fill('#007bff');
+  const headers = ["Nombre", "Paterno", "Materno", "Tema", "Libro", "Dificultad", "Correctas", "Incorrectas", "Nota", "Estado"];
+  headers.forEach((header, i) => {
+      doc.fillColor('white').font('Helvetica-Bold').text(header, leftMargin + cellWidths.slice(0, i).reduce((a, b) => a + b, 0) + 5, tableTop + 5, { width: cellWidths[i], align: 'center' });
+  });
+
+  // Dibujar las filas de los registros
+  registros.forEach((registro, i) => {
+      const y = tableTop + (i + 1) * itemHeight;
+      if (i % 2 === 0) {
+          doc.fillColor('#f9f9f9').rect(leftMargin, y, totalTableWidth, itemHeight).fill();  // Alternar color en las filas
+      }
+
+      let xPosition = leftMargin;
+      doc.fillColor('#333333').font('Helvetica');
+
+      const incorrectas = registro.resultado.total - registro.resultado.correctas;
+      const estado = registro.resultado.nota >= 6 ? 'Aprobado' : 'Reprobado';
+
+      // Llenar cada columna con los datos correctos
+      doc.text(registro.resultado.nombre, xPosition + 5, y + 5, { width: cellWidths[0], align: 'center' });
+      xPosition += cellWidths[0];
+      doc.text(registro.resultado.apellido, xPosition + 5, y + 5, { width: cellWidths[1], align: 'center' });
+      xPosition += cellWidths[1];
+      doc.text(registro.resultado.apellido2 || '', xPosition + 5, y + 5, { width: cellWidths[2], align: 'center' });
+      xPosition += cellWidths[2];
+      doc.text(registro.examen.tema, xPosition + 5, y + 5, { width: cellWidths[3], align: 'center' });
+      xPosition += cellWidths[3];
+      doc.text(registro.examen.libro, xPosition + 5, y + 5, { width: cellWidths[4], align: 'center' });
+      xPosition += cellWidths[4];
+      doc.text(registro.examen.dificultad || 'N/A', xPosition + 5, y + 5, { width: cellWidths[5], align: 'center' });
+      xPosition += cellWidths[5];
+      doc.text(registro.resultado.correctas.toString(), xPosition + 5, y + 5, { width: cellWidths[6], align: 'center' });
+      xPosition += cellWidths[6];
+      doc.text(incorrectas.toString(), xPosition + 5, y + 5, { width: cellWidths[7], align: 'center' });
+      xPosition += cellWidths[7];
+      doc.text(registro.resultado.nota.toString(), xPosition + 5, y + 5, { width: cellWidths[8], align: 'center' });
+      xPosition += cellWidths[8];
+      doc.text(estado, xPosition + 5, y + 5, { width: cellWidths[9], align: 'center' });
+  });
+}

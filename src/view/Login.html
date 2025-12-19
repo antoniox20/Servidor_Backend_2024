@@ -17,8 +17,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
-    <!-- Custom JS -->
-    <script src="/src/index.js"></script>
 </head>
 <body>
     <div class="login-container">
@@ -36,7 +34,7 @@
                 <form id="loginForm" onsubmit="return handleSubmit(event)">
                     <div class="input-group mb-3">
                         <span class="input-group-text"><i class="fas fa-user"></i></span>
-                        <input type="text" class="form-control form-control-lg" id="identifier" placeholder="Usuario" required>
+                        <input type="text" class="form-control form-control-lg" id="identifier" placeholder="Usuario o Email" required>
                     </div>
                     <div class="input-group mb-3 position-relative">
                         <span class="input-group-text"><i class="fas fa-lock"></i></span>
@@ -86,16 +84,54 @@
             const identifier = document.getElementById('identifier').value;
             const credential = document.getElementById('credential').value;
 
-            const success = await window.electron.login(identifier, credential);
-            if (success) {
-                $('#successModal').modal('show'); // Show success modal
-                setTimeout(() => {
-                    $('#successModal').modal('hide');
-                    window.location.href = success === 'admin' ? 'index.html' : 'Estudiante.html';
-                }, 2000);
-                socket.emit('chat message', 'Usuario ha iniciado sesión');
-            } else {
-                $('#errorModal').modal('show'); // Show error modal
+            try {
+                const success = await window.electron.login(identifier, credential);
+                
+                if (success === 'admin') {
+                    $('#successModal').modal('show');
+                    setTimeout(() => {
+                        $('#successModal').modal('hide');
+                        window.location.href = 'index.html'; // Redirigir al dashboard del administrador
+                    }, 2000);
+                } else if (success === 'estudiante') {
+                    // Hacer la solicitud al servidor de estudiantes
+                    const response = await fetch('http://localhost:3000/loginEstudiante', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ email: identifier, telefono: credential })
+                    });
+                    
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        // Guardar los datos del estudiante en localStorage
+                        localStorage.setItem('estudiante_nombre', result.estudiante.nombre);
+                        localStorage.setItem('estudiante_apellido', result.estudiante.apellido);
+                        localStorage.setItem('estudiante_apellido2', result.estudiante.apellido2);
+                        localStorage.setItem('estudiante_nivel', result.estudiante.nivel);
+
+                        $('#successModal').modal('show');
+                        setTimeout(() => {
+                            $('#successModal').modal('hide');
+                            window.location.href = 'Estudiante.html'; // Redirigir al dashboard del estudiante
+                        }, 2000);
+                    } else {
+                        $('#errorModal').modal('show');
+                        setTimeout(() => {
+                            $('#errorModal').modal('hide');
+                        }, 2000);
+                    }
+                } else {
+                    $('#errorModal').modal('show');
+                    setTimeout(() => {
+                        $('#errorModal').modal('hide');
+                    }, 2000);
+                }
+            } catch (error) {
+                console.error('Error durante el proceso de autenticación:', error);
+                $('#errorModal').modal('show');
                 setTimeout(() => {
                     $('#errorModal').modal('hide');
                 }, 2000);

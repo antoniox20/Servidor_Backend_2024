@@ -114,14 +114,27 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Verificar Token
         document.getElementById('verify-token').addEventListener('click', function() {
-            const token = document.getElementById('tokenInput').value;
+            const token = document.getElementById('tokenInput').value.trim();
+
+            if (!token) {
+                mostrarError('El token no puede estar vacío.');
+                return;
+            }
+
+            // Obtener los datos del estudiante del localStorage
+            const nombre = localStorage.getItem('estudiante_nombre');
+            const apellido = localStorage.getItem('estudiante_apellido');
+            const apellido2 = localStorage.getItem('estudiante_apellido2');
+
+            // Verificar el token y si el estudiante ya resolvió un examen
             fetch('http://localhost:3000/verificarToken', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ token: token })
+                body: JSON.stringify({ token: token, nombre: nombre, apellido: apellido, apellido2: apellido2 })
             })
             .then(response => response.json())
             .then(data => {
@@ -131,33 +144,31 @@
                         $('#successModal').modal('hide');
                         window.location.href = `ExamenGenerado.html?token=${data.examen.token}`;
                     }, 2000);
+                } else if (data.message === 'Usted ya resolvió un examen.') {
+                    mostrarError('Usted ya resolvió un examen.');
                 } else if (data.message === 'Este examen ya ha sido resuelto.') {
-                    // Mostrar un modal de error personalizado si el examen ya ha sido resuelto
-                    document.getElementById('error-message').textContent = 'Este examen ya ha sido resuelto.';
-                    $('#errorModal').modal('show');
-                    setTimeout(() => {
-                        $('#errorModal').modal('hide');
-                    }, 2000);
+                    mostrarError('Este examen ya ha sido resuelto.');
                 } else {
-                    // Token no válido o expirado
-                    document.getElementById('error-message').textContent = 'Token inválido. Por favor, intenta nuevamente.';
-                    $('#errorModal').modal('show');
-                    setTimeout(() => {
-                        $('#errorModal').modal('hide');
-                    }, 2000);
+                    mostrarError('Token inválido. Por favor, intenta nuevamente.');
                 }
             })
             .catch(error => {
                 console.error('Error al verificar el token:', error);
-                document.getElementById('error-message').textContent = 'Hubo un problema al verificar el token.';
-                $('#errorModal').modal('show');
-                setTimeout(() => {
-                    $('#errorModal').modal('hide');
-                }, 2000);
+                mostrarError('Hubo un problema al verificar el token.');
             });
         });
 
-        document.getElementById('back-to-login').addEventListener('click', () => {
+        // Función para mostrar errores
+        function mostrarError(mensaje) {
+            document.getElementById('error-message').textContent = mensaje;
+            $('#errorModal').modal('show');
+            setTimeout(() => {
+                $('#errorModal').modal('hide');
+            }, 2000);
+        }
+
+        // Redirigir al Login
+        document.getElementById('back-to-login').addEventListener('click', function() {
             window.location.href = 'Login.html';
         });
     </script>

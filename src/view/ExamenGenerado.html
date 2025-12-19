@@ -18,7 +18,7 @@
                     <ion-icon name="school-outline"></ion-icon> Examen de Inglés
                 </a>
                 <img src="./img/EIE_ESCUDO.png" alt="Escudo" class="escudo">
-                
+            </div>
         </nav>
     </header>
     <main class="container mt-4">
@@ -30,8 +30,8 @@
         <div id="studentInfo" class="mb-4 text-center p-3 bg-light rounded-lg shadow">
             <h5><strong>Nombre:</strong> <span id="nombreDisplay"></span></h5>
             <h5><strong>Apellido:</strong> <span id="apellidoDisplay"></span></h5>
-            <h5><strong>Segundo Apellido:</strong> <span id="apellido2Display"></span></h5> <!-- Añadir segundo apellido -->
-            <h5><strong>Nivel:</strong> <span id="nivelDisplay"></span></h5> <!-- Añadir nivel -->
+            <h5><strong>Segundo Apellido:</strong> <span id="apellido2Display"></span></h5>
+            <h5><strong>Nivel:</strong> <span id="nivelDisplay"></span></h5>
         </div>
         <form id="examenForm" class="bg-white p-4 rounded-lg shadow">
             <div id="preguntasContainer">
@@ -44,11 +44,21 @@
         <div id="resultado" class="mt-4"></div>
         <div id="detallesResultado" class="mt-4"></div>
     </main>
+
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@ionic/core@6.1.0/dist/ionic/ionic.js"></script>
     <script>
         let preguntasGlobal = []; // Variable global para almacenar las preguntas
         let cronometroInterval; // Guardar referencia al intervalo
+        let horaInicio = new Date(); // Capturamos la hora de inicio cuando la página carga
+
+        // Función para formatear horas de manera legible
+        function formatHora(date) {
+            let hours = date.getHours().toString().padStart(2, '0');
+            let minutes = date.getMinutes().toString().padStart(2, '0');
+            let seconds = date.getSeconds().toString().padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}`;
+        }
 
         function goBack() {
             window.location.href = 'Estudiante.html';
@@ -59,15 +69,28 @@
 
             $('#tokenDisplay').text(token);
 
-            // Llamar al backend para obtener los datos del estudiante y del examen utilizando el token
+            // Recuperar datos del estudiante desde localStorage
+            const nombre = localStorage.getItem('estudiante_nombre');
+            const apellido = localStorage.getItem('estudiante_apellido');
+            const apellido2 = localStorage.getItem('estudiante_apellido2');
+            const nivel = localStorage.getItem('estudiante_nivel');
+
+            // Comprobar si los datos están presentes y mostrarlos
+            if (nombre && apellido && nivel) {
+                $('#nombreDisplay').text(nombre);
+                $('#apellidoDisplay').text(apellido);
+                $('#apellido2Display').text(apellido2 || ''); // Mostrar si existe, sino vacío
+                $('#nivelDisplay').text(nivel);
+            } else {
+                alert('Error: No se encontraron datos del estudiante. Redirigiendo al inicio.');
+                goBack();
+            }
+
+            // Llamar al backend para obtener las preguntas del examen utilizando el token
             fetch(`http://localhost:3000/obtenerExamenPorToken?token=${token}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.exito) {
-                        $('#nombreDisplay').text(data.estudiante.nombre);
-                        $('#apellidoDisplay').text(data.estudiante.apellido);
-                        $('#apellido2Display').text(data.estudiante.apellido2); // Mostrar segundo apellido
-                        $('#nivelDisplay').text(data.estudiante.nivel);
                         // Almacenar las preguntas globalmente
                         preguntasGlobal = data.preguntas;
 
@@ -79,10 +102,10 @@
                                     <h5>Q${index + 1}: ${pregunta.pregunta} <ion-icon name="help-outline"></ion-icon></h5>
                             `;
 
-                            if (pregunta.audio) {
+                            if (pregunta.audioUrl) {
                                 preguntaHtml += `
                                     <audio controls class="w-100 mt-2">
-                                        <source src="${pregunta.audio}" type="audio/mpeg">
+                                        <source src="${pregunta.audioUrl}" type="audio/mpeg">
                                         Your browser does not support the audio element.
                                     </audio>
                                 `;
@@ -127,6 +150,7 @@
                 .catch(error => {
                     console.error('Error:', error);
                     alert('Error al obtener los datos del examen.');
+                    goBack();
                 });
 
             function iniciarCronometro(tiempoRestante) {
@@ -145,7 +169,7 @@
                     }
                 };
 
-                cronometroInterval = setInterval(actualizarCronometro, 1000); // Guardar el intervalo
+                cronometroInterval = setInterval(actualizarCronometro, 1000);
                 actualizarCronometro();
             }
 
@@ -156,8 +180,9 @@
             $('#examenForm').submit(async function (e) {
                 e.preventDefault();
 
-                // Detener el cronómetro al enviar las respuestas
                 clearInterval(cronometroInterval);
+
+                let horaFin = new Date(); // Capturamos la hora de fin cuando el estudiante envía las respuestas
 
                 const respuestas = preguntasGlobal.map((pregunta, index) => {
                     let respuestaSeleccionada;
@@ -175,32 +200,38 @@
                     };
                 });
 
-                // Obtener nombre y apellido del estudiante desde la interfaz
-                const nombre = $('#nombreDisplay').text();
-                const apellido = $('#apellidoDisplay').text();
-
                 try {
                     const response = await fetch('http://localhost:3000/calificarExamen', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ token, nombre, apellido, respuestas })
+                        body: JSON.stringify({
+                            token,
+                            nombre,
+                            apellido,
+                            apellido2,
+                            respuestas,
+                            horaInicio, // Enviamos la hora de inicio
+                            horaFin // Enviamos la hora de fin
+                        })
                     });
 
                     const data = await response.json();
 
                     if (response.ok) {
                         $('#examenForm').hide();
-                        // Determinar si el estudiante aprobó o reprobó según la nota
                         const mensaje = data.nota >= 6 ? "¡Aprobado!" : "Reprobado";
 
                         $('#resultado').html(`
-                            <div class="alert alert-info">
+                            <div class="alert alert-info text-left">
                                 <ion-icon name="checkmark-circle-outline"></ion-icon>
                                 Respondiste correctamente ${data.correctas} de ${data.total} preguntas.<br>
-                                <strong>Nota:</strong> ${data.nota} <ion-icon name="ribbon-outline"></ion-icon><br>
-                                <strong>Estado:</strong> ${mensaje}
+                                <span><strong>Nota:</strong> ${data.nota} </span> 
+                                <span><strong>Estado:</strong> ${mensaje}</span><br>
+                                <span><strong>Hora Inicio:</strong> ${formatHora(new Date(horaInicio))} </span>
+                                <span><strong>Hora Fin:</strong> ${formatHora(new Date(horaFin))}</span>
+                                <span><strong>Tiempo Total:</strong> ${data.tiempoTranscurrido} minutos</span>
                             </div>
                         `);
                         $('#detallesResultado').html(data.detalles);

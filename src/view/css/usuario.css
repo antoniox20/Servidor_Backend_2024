@@ -189,7 +189,7 @@ body{
 }
 
 .table thead {
-    background-color: #f03f20;
+    background-color: #4031ed;
     color: #f9f9f9;
 }
 
@@ -199,4 +199,18 @@ body{
 
 .table tbody tr:hover {
     background-color: #ffe5e0;
+}
+
+.table .btn-group-actions {
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    gap: 8px; 
+}
+
+
+.table .btn {
+    flex: 3; 
+    min-width: 90px; 
+    padding: 5px 10px; 
 }

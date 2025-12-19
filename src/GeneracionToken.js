@@ -18,7 +18,7 @@ function generarPalabrasClave(longitud) {
     return palabrasClave;
 }
 
-function generarTokenPersonalizado(palabrasClave, ttlMinutes = 60) {
+function generarTokenPersonalizado(palabrasClave, ttlMinutes = 10) {
     const SALT = '9jf83hfnskd73jdfg!93jnd@k#34nsf4'; 
     const now = new Date();
     const creationTime = now.toISOString();

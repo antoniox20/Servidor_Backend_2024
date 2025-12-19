@@ -32,6 +32,7 @@
                         <tr>
                             <th>Nombre</th>
                             <th>Apellido</th>
+                            <th>Apellido2</th> 
                             <th>Correctas</th>
                             <th>Total</th>
                             <th>Nota</th>
@@ -42,11 +43,6 @@
                         <!-- Las filas de la tabla se agregarán aquí dinámicamente -->
                     </tbody>
                 </table>
-                <div class="text-center mt-3">
-                    <input type="text" id="nombreReporte" placeholder="Nombre" class="form-control mb-2" required>
-                    <input type="text" id="apellidoReporte" placeholder="Apellido" class="form-control mb-2" required>
-                    <button id="generarReporteBtn" class="btn btn-primary"><i class="fas fa-file-alt"></i> Generar Reporte</button>
-                </div>
             </div>
         </div>
     </div>
@@ -68,6 +64,7 @@
                             <tr>
                                 <td>${examen.nombre}</td>
                                 <td>${examen.apellido}</td>
+                                <td>${examen.apellido2}</td>
                                 <td>${examen.correctas}</td>
                                 <td>${examen.total}</td>
                                 <td>${examen.nota}</td>

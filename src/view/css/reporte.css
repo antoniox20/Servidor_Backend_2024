@@ -1,83 +1,182 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f8f9fa;
+    font-family: 'Roboto', sans-serif;
+    background-color: #2c3e50; /* Fondo oscuro para contraste */
+    color: #ecf0f1;
     padding: 20px;
 }
 
 .container {
-    background-color: #ffffff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
-    overflow: hidden;
+    background-color: #34495e; /* Fondo gris oscuro para contraste */
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0px 15px 30px rgba(0, 0, 0, 0.5);
 }
 
-.table {
-    margin-top: 20px;
-    table-layout: auto;
-    width: 100%;
+h1, h2 {
+    font-weight: 600;
+    color: #ecf0f1; /* Texto blanco para contraste */
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+.table-hover tbody tr:hover {
+    background-color: #1abc9c; /* Verde agua para hover */
+    color: #fff;
 }
 
 .table th, .table td {
     text-align: center;
     vertical-align: middle;
+    border: 1px solid #34495e; /* Bordes de las tablas oscuros */
 }
 
-.header, .subheader {
-    background-color: #007bff;
-    color: #ffffff;
-    padding: 10px;
-    border-radius: 8px 8px 0 0;
-    text-align: center;
-    margin-bottom: 10px;
+.btn {
+    font-size: 16px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 25px;
+    background-color: #e74c3c; /* Rojo llamativo */
+    color: #fff;
 }
 
-.header h1, .subheader h2 {
-    margin: 0;
+.btn:hover {
+    background-color: #c0392b; /* Rojo más oscuro en hover */
+    box-shadow: 0px 4px 10px rgba(231, 76, 60, 0.6);
 }
 
-.print-btn {
-    margin-top: 20px;
+.shadow-sm {
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.shadow-lg {
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.chart-container {
     display: flex;
     justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+    flex-direction: column;
 }
 
-.print-btn button {
-    background-color: #007bff;
-    color: white;
+#librosChart, #nivelesChart {
+    max-width: 500px;
+    max-height: 500px;
+}
+
+canvas {
+    width: 100% !important;
+    height: auto !important;
+}
+
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 15px;
+    overflow: hidden;
+    background: #ffffff; /* Azul vibrante */
+    color: #fff;
     border: none;
-    padding: 10px 20px;
-    font-size: 16px;
-    border-radius: 5px;
-    cursor: pointer;
 }
 
-.print-btn button:hover {
-    background-color: #0056b3;
+.card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0px 15px 30px rgba(0, 0, 0, 0.3);
+    background: #ffffff; /* Azul claro en hover */
 }
 
-@media print {
-    body {
-        background-color: #ffffff;
-    }
-    .container {
-        box-shadow: none;
-    }
-    .print-btn {
-        display: none;
-    }
+.card-body {
+    padding: 20px;
 }
 
-.info-icon {
-    margin-right: 5px;
+.filtro-card {
+    background-color: #144f9d;
+    border-radius: 15px;
+    overflow: hidden;
+    border: 1px solid #389812;
 }
 
-.table thead th {
-    font-size: 16px;
-    font-weight: bold;
+.filtro-card:hover {
+    background-color: #2a85e0;
+    color: #ecf0f1;
 }
 
-.table tbody td {
-    font-size: 14px;
+.filtro-contenido {
+    background-color: #eef1f0; /* Fondo verde agua llamativo */
+    border-radius: 10px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    margin-top: 20px;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(52, 73, 94, 0.5); /* Filas de tabla alternadas */
+}
+
+.thead-dark th {
+    background-color: #2c3e50;
+    color: #ecf0f1;
+}
+
+.table {
+    border-radius: 15px;
+    overflow: hidden;
+    background-color: #fafafa; /* Fondo oscuro de tabla */
+}
+
+.text-center {
+    margin-bottom: 20px;
+}
+
+/* Fondo detrás de las tarjetas */
+#tarjetasContainer {
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.3), rgba(241, 196, 15, 0.3));
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 0px 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Bordes animados en botones */
+.btn-animated {
+    position: relative;
+    display: inline-block;
+    padding: 10px 30px;
+    border-radius: 30px;
+    overflow: hidden;
+    transition: color 0.4s;
+    background-color: #e67e22; /* Naranja llamativo */
+    color: #fff;
+}
+
+.btn-animated:hover {
+    color: #fff;
+    background-color: #d35400; /* Naranja más oscuro en hover */
+}
+
+.btn-animated:before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 0;
+    width: 100%;
+    height: 3px;
+    background-color: #d35400;
+    transition: height 0.4s;
+}
+
+.btn-animated:hover:before {
+    height: 100%;
+}
+
+/* Fondo de la página con diseño más oscuro */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url("https://www.transparenttextures.com/patterns/diagmonds-light.png");
+    z-index: -1;
+    opacity: 0.8;
 }

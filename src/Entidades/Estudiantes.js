@@ -30,9 +30,13 @@ const estudianteSchema = new mongoose.Schema({
     enum: ['basico', 'intermedio', 'avanzado'], 
     required: true
   },
-  examenAsignado: {
-    type: String, 
-    default: null
+  isLoggedIn: { 
+    type: Boolean, 
+    default: false 
+  },
+  libro: {
+    type: String,
+    required: true
   }
 });
 

@@ -21,6 +21,7 @@
         <div id="alertContainer" class="mt-3"></div>
 
         <form id="formPregunta" class="my-4" enctype="multipart/form-data">
+            <input type="hidden" id="preguntaId"> <!-- Campo oculto para el ID de la pregunta al editar -->
             <div class="form-group">
                 <label for="tipoPregunta">Tipo de Pregunta</label>
                 <select class="form-control" id="tipoPregunta" required>
@@ -30,7 +31,19 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="pregunta">Pregunta</label>
+                <label for="libro">Libro</label>
+                <select class="form-control" id="libro" required>
+                    <option value="">Selecciona un libro</option>
+                    <script>
+                        for (let i = 1; i <= 30; i++) {
+                            document.write(`<option value="${i}">Libro ${i}</option>`);
+                        }
+                    </script>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="pregunta">Pregunta - Nivel Básico</label>
                 <input type="text" class="form-control" id="pregunta" required>
             </div>
             <div class="form-group opciones-group">
@@ -43,7 +56,7 @@
             </div>
             <div class="form-group">
                 <label for="dificultad">Dificultad</label>
-                <select class="form-control" id="dificultad" required>
+                <select class="form-control" id="dificultad" required disabled>
                     <option value="facil">Básico</option>
                     <option value="medio">Intermedio</option>
                     <option value="dificil">Avanzado</option>
@@ -53,9 +66,33 @@
                 <label for="audio">Archivo de Audio</label>
                 <input type="file" class="form-control" id="audio" accept="audio/*">
             </div>
-            <button type="submit" class="btn btn-primary">Agregar Pregunta</button>
+            <button type="submit" class="btn btn-primary" id="submitButton">Agregar Pregunta</button>
         </form>
 
+        <!-- Filtros para buscar preguntas -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <select id="libroFiltro" class="form-control">
+                    <option value="">Selecciona un libro</option>
+                    <script>
+                        for (let i = 1; i <= 30; i++) {
+                            document.write(`<option value="${i}">Libro ${i}</option>`);
+                        }
+                    </script>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <select id="tipoFiltro" class="form-control">
+                    <option value="">Selecciona un tipo de pregunta</option>
+                    <option value="opcionMultiple">Opción Múltiple</option>
+                    <option value="verdaderoFalso">Verdadero/Falso</option>
+                    <option value="listening">Listening</option>
+                </select>
+            </div>
+        </div>
+        <button id="filtrarPreguntas" class="btn btn-primary mb-4">Buscar Preguntas</button>
+
+        <!-- Tablas de preguntas -->
         <h2>Preguntas Opción Múltiple</h2>
         <table class="table table-bordered" id="tablaPreguntasOpcionMultiple">
             <thead>
@@ -65,6 +102,7 @@
                     <th>Opciones</th>
                     <th>Respuesta Correcta</th>
                     <th>Dificultad</th>
+                    <th>Libro</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -81,6 +119,7 @@
                     <th>Opciones</th>
                     <th>Respuesta Correcta</th>
                     <th>Dificultad</th>
+                    <th>Libro</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -97,6 +136,7 @@
                     <th>Audio</th>
                     <th>Respuesta Correcta</th>
                     <th>Dificultad</th>
+                    <th>Libro</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -111,19 +151,51 @@
         }
 
         $(document).ready(function() {
-            $('#tipoPregunta').change(function() {
-                const tipoPregunta = $(this).val();
-                if (tipoPregunta === 'listening') {
-                    $('.opciones-group').addClass('d-none');
-                    $('.audio-group').removeClass('d-none');
-                } else if (tipoPregunta === 'verdaderoFalso') {
-                    $('.opciones-group').removeClass('d-none');
-                    $('#opciones').val('True,False');
-                    $('.audio-group').addClass('d-none');
-                } else {
-                    $('.opciones-group').removeClass('d-none');
-                    $('.audio-group').addClass('d-none');
-                }
+        let isEditing = false; 
+        let currentPreguntaId = null;
+
+        // Función para actualizar la etiqueta de la pregunta según el libro seleccionado
+        $('#libro').change(function() {
+            const libro = parseInt($(this).val());
+            let nivel = '';
+            
+            // Determinar el nivel según el número del libro
+            if (libro >= 1 && libro <= 9) {
+                nivel = 'Nivel Básico';
+            } else if (libro >= 10 && libro <= 19) {
+                nivel = 'Nivel Intermedio';
+            } else if (libro >= 20 && libro <= 30) {
+                nivel = 'Nivel Avanzado';
+            }
+            
+            // Actualizar la etiqueta del campo de la pregunta
+            $('label[for="pregunta"]').text(`Pregunta - ${nivel}`);
+            
+            // Actualizar la dificultad (opcional)
+            if (libro >= 1 && libro <= 9) {
+                $('#dificultad').val('facil');
+            } else if (libro >= 10 && libro <= 19) {
+                $('#dificultad').val('medio');
+            } else if (libro >= 20 && libro <= 30) {
+                $('#dificultad').val('dificil');
+            }
+            $('#dificultad').prop('disabled', true); 
+        });
+
+        $('#tipoPregunta').change(function() {
+            const tipoPregunta = $(this).val();
+            if (tipoPregunta === 'listening') {
+                $('.opciones-group').addClass('d-none');
+                $('.audio-group').removeClass('d-none');
+            } else if (tipoPregunta === 'verdaderoFalso') {
+                $('.opciones-group').removeClass('d-none');
+                $('#opciones').val('True,False');
+                $('.audio-group').addClass('d-none');
+            } else {
+                $('.opciones-group').removeClass('d-none');
+                $('.audio-group').addClass('d-none');
+             }
+        
             });
 
             function mostrarAlerta(mensaje, tipo) {
@@ -141,127 +213,161 @@
                 }, 3000);
             }
 
-            function cargarPreguntas() {
-                $.ajax({
-                    type: 'GET',
-                    url: 'http://localhost:3000/preguntas',
-                    success: function(preguntas) {
-                        const cuerpoTablaPreguntasOpcionMultiple = $('#cuerpoTablaPreguntasOpcionMultiple');
-                        const cuerpoTablaPreguntasVerdaderoFalso = $('#cuerpoTablaPreguntasVerdaderoFalso');
-                        const cuerpoTablaPreguntasListening = $('#cuerpoTablaPreguntasListening');
+            function cargarPreguntas(filtros = {}) {
+    $.ajax({
+        type: 'GET',
+        url: 'http://localhost:3000/preguntas',
+        success: function(preguntas) {
+            // Limpiar las tablas antes de rellenarlas nuevamente
+            $('#cuerpoTablaPreguntasOpcionMultiple').empty();
+            $('#cuerpoTablaPreguntasVerdaderoFalso').empty();
+            $('#cuerpoTablaPreguntasListening').empty();
 
-                        cuerpoTablaPreguntasOpcionMultiple.empty();
-                        cuerpoTablaPreguntasVerdaderoFalso.empty();
-                        cuerpoTablaPreguntasListening.empty();
-
-                        preguntas.forEach((pregunta) => {
-                            if (pregunta.tipo === 'opcionMultiple') {
-                                const filaPreguntaOpcionMultiple = `
-                                    <tr>
-                                        <td>${pregunta.tipo}</td>
-                                        <td>${pregunta.pregunta}</td>
-                                        <td>${pregunta.opciones ? pregunta.opciones.join(', ') : ''}</td>
-                                        <td>${pregunta.respuestaCorrecta}</td>
-                                        <td>${pregunta.dificultad}</td>
-                                        <td>
-                                            <button class="btn btn-danger btn-sm" onclick="eliminarPregunta('${pregunta._id}')">Eliminar</button>
-                                        </td>
-                                    </tr>
-                                `;
-                                cuerpoTablaPreguntasOpcionMultiple.append(filaPreguntaOpcionMultiple);
-                            } else if (pregunta.tipo === 'verdaderoFalso') {
-                                const filaPreguntaVerdaderoFalso = `
-                                    <tr>
-                                        <td>${pregunta.tipo}</td>
-                                        <td>${pregunta.pregunta}</td>
-                                        <td>${pregunta.opciones ? pregunta.opciones.join(', ') : ''}</td>
-                                        <td>${pregunta.respuestaCorrecta}</td>
-                                        <td>${pregunta.dificultad}</td>
-                                        <td>
-                                            <button class="btn btn-danger btn-sm" onclick="eliminarPregunta('${pregunta._id}')">Eliminar</button>
-                                        </td>
-                                    </tr>
-                                `;
-                                cuerpoTablaPreguntasVerdaderoFalso.append(filaPreguntaVerdaderoFalso);
-                            } else if (pregunta.tipo === 'listening') {
-                                const filaPreguntaListening = `
-                                    <tr>
-                                        <td>${pregunta.tipo}</td>
-                                        <td>${pregunta.pregunta}</td>
-                                        <td>
-                                            <audio controls>
-                                                <source src="${pregunta.audio}" type="audio/mp3">
-                                                Tu navegador no soporta el elemento de audio.
-                                            </audio>
-                                        </td>
-                                        <td>${pregunta.respuestaCorrecta}</td>
-                                        <td>${pregunta.dificultad}</td>
-                                        <td>
-                                            <button class="btn btn-danger btn-sm" onclick="eliminarPregunta('${pregunta._id}')">Eliminar</button>
-                                        </td>
-                                    </tr>
-                                `;
-                                cuerpoTablaPreguntasListening.append(filaPreguntaListening);
-                            }
-                        });
-                    },
-                    error: function() {
-                        alert('Error al cargar las preguntas');
-                    }
+            preguntas.filter(pregunta => {
+                let coincide = true;
+                if (filtros.libro && pregunta.libro !== `libro ${filtros.libro}`) {
+                    coincide = false;
+                }
+                if (filtros.tipo && pregunta.tipo !== filtros.tipo) {
+                    coincide = false;
+                }
+                return coincide;
+            }).forEach(pregunta => {
+                let fila = `
+                    <tr>
+                        <td>${pregunta.tipo}</td>
+                        <td>${pregunta.pregunta}</td>
+                        <td>${pregunta.opciones ? pregunta.opciones.join(', ') : ''}</td>
+                        <td>${pregunta.respuestaCorrecta}</td>
+                        <td>${pregunta.dificultad}</td>
+                        <td>${pregunta.libro}</td>
+                        <td>
+                            <div class="btn-group-actions">
+                                <button class="btn btn-danger btn-sm" onclick="eliminarPregunta('${pregunta._id}')">Eliminar</button>
+                                <button class="btn btn-warning btn-sm" onclick="editarPregunta('${pregunta._id}')">Editar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                if (pregunta.tipo === 'listening') {
+                    // Ajustar fila para mostrar audio y opciones correctamente
+                    fila = `
+                        <tr>
+                            <td>${pregunta.tipo}</td>
+                            <td>${pregunta.pregunta}</td>
+                            <td><audio controls src="${pregunta.audio}"></audio></td>
+                            <td>${pregunta.respuestaCorrecta}</td>
+                            <td>${pregunta.dificultad}</td>
+                            <td>${pregunta.libro}</td>
+                            <td>
+                                <div class="btn-group-actions">
+                                    <button class="btn btn-danger btn-sm" onclick="eliminarPregunta('${pregunta._id}')">Eliminar</button>
+                                    <button class="btn btn-warning btn-sm" onclick="editarPregunta('${pregunta._id}')">Editar</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    $('#cuerpoTablaPreguntasListening').append(fila);
+                } else if (pregunta.tipo === 'opcionMultiple') {
+                    $('#cuerpoTablaPreguntasOpcionMultiple').append(fila);
+                } else if (pregunta.tipo === 'verdaderoFalso') {
+                    $('#cuerpoTablaPreguntasVerdaderoFalso').append(fila);
+                }
+            });
+        },
+        error: function() {
+            alert('Error al cargar las preguntas');
+        }
                 });
             }
 
-            $('#formPregunta').submit(function(event) {
-                event.preventDefault();
-                const tipoPregunta = $('#tipoPregunta').val();
-                const pregunta = $('#pregunta').val();
-                const opciones = $('#opciones').val().split(',').map(opcion => opcion.trim());
-                const respuestaCorrecta = $('#respuestaCorrecta').val();
-                const dificultad = $('#dificultad').val();
-                const audio = $('#audio')[0].files[0];
-
-                const formData = new FormData();
-                formData.append('tipo', tipoPregunta);
-                formData.append('pregunta', pregunta);
-                formData.append('opciones', tipoPregunta === 'listening' ? '' : opciones);
-                formData.append('respuestaCorrecta', respuestaCorrecta);
-                formData.append('dificultad', dificultad);
-                if (tipoPregunta === 'listening' && audio) {
-                    formData.append('audio', audio);
-                }
-
-                $.ajax({
-                    type: 'POST',
-                    url: 'http://localhost:3000/preguntas',
-                    contentType: false,
-                    processData: false,
-                    data: formData,
-                    success: function() {
-                        $('#formPregunta')[0].reset();
-                        mostrarAlerta('Pregunta agregada exitosamente', 'success');
-                        cargarPreguntas();
-                    },
-                    error: function() {
-                        alert('Error al agregar la pregunta');
-                    }
-                });
+            $('#filtrarPreguntas').on('click', function() {
+                const libro = $('#libroFiltro').val();
+                const tipo = $('#tipoFiltro').val();
+                const filtros = {
+                    libro: libro !== "" ? libro : null,
+                    tipo: tipo !== "" ? tipo : null
+                };
+                cargarPreguntas(filtros);
             });
+
+            cargarPreguntas();
 
             window.eliminarPregunta = function(id) {
                 $.ajax({
                     type: 'DELETE',
                     url: `http://localhost:3000/preguntas/${id}`,
                     success: function() {
-                        mostrarAlerta('Pregunta eliminada exitosamente', 'success');
                         cargarPreguntas();
+                        mostrarAlerta('Pregunta eliminada exitosamente', 'success');
                     },
                     error: function() {
                         alert('Error al eliminar la pregunta');
                     }
                 });
-            }
+            };
 
-            cargarPreguntas();
+            window.editarPregunta = function(id) {
+                $.ajax({
+                    type: 'GET',
+                    url: `http://localhost:3000/preguntas/${id}`,
+                    success: function(pregunta) {
+                        $('#preguntaId').val(pregunta._id);
+                        $('#tipoPregunta').val(pregunta.tipo);
+                        $('#pregunta').val(pregunta.pregunta);
+                        $('#libro').val(pregunta.libro.replace('libro ', ''));
+                        $('#opciones').val(pregunta.opciones ? pregunta.opciones.join(', ') : '');
+                        $('#respuestaCorrecta').val(pregunta.respuestaCorrecta);
+                        $('#dificultad').val(pregunta.dificultad);
+                        $('#submitButton').text('Actualizar Pregunta');
+                        isEditing = true;
+                        currentPreguntaId = id;
+                    },
+                    error: function() {
+                        alert('Error al obtener la pregunta para editar');
+                    }
+                });
+            };
+
+            $('#formPregunta').submit(function(event) {
+                event.preventDefault();
+                const tipoPregunta = $('#tipoPregunta').val();
+                const pregunta = $('#pregunta').val();
+                const libro = $('#libro').val();
+                const opciones = $('#opciones').val().split(',').map(opcion => opcion.trim());
+                const respuestaCorrecta = $('#respuestaCorrecta').val();
+                const dificultad = $('#dificultad').val();
+                const audio = $('#audio')[0].files[0];
+                const formData = new FormData();
+                formData.append('tipo', tipoPregunta);
+                formData.append('pregunta', pregunta);
+                formData.append('libro', `libro ${libro}`);
+                formData.append('opciones', tipoPregunta === 'listening' ? '' : opciones);
+                formData.append('respuestaCorrecta', respuestaCorrecta);
+                formData.append('dificultad', dificultad);
+                if (audio) {
+                    formData.append('audio', audio);
+                }
+
+                const ajaxOptions = {
+                    type: isEditing ? 'PUT' : 'POST',
+                    url: isEditing ? `http://localhost:3000/preguntas/${currentPreguntaId}` : 'http://localhost:3000/preguntas',
+                    contentType: false,
+                    processData: false,
+                    data: formData,
+                    success: function() {
+                        $('#formPregunta')[0].reset();
+                        mostrarAlerta(isEditing ? 'Pregunta actualizada exitosamente' : 'Pregunta agregada exitosamente', 'success');
+                        cargarPreguntas();
+                        isEditing = false;
+                        $('#submitButton').text('Agregar Pregunta');
+                    },
+                    error: function() {
+                        alert('Error al agregar o actualizar la pregunta');
+                    }
+                };
+                $.ajax(ajaxOptions);
+            });
         });
     </script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>

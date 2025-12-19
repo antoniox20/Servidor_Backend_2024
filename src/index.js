@@ -13,7 +13,10 @@ const { generateQuestions } = require('./generacion');
 const Pregunta = require('./Entidades/Preguntas');
 const Resultado = require('./Entidades/Resultados'); 
 const Seguimiento = require('./Entidades/Seguimiento');
+const Registro = require('./Entidades/Registro');
+const Libros = require('./Entidades/Libros');
 const multer = require('multer');
+const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const http = require('http');
 const socketIO = require('socket.io'); 
@@ -27,6 +30,11 @@ const io = socketIO(server);
 appExpress.use(cors());
 const PORTS = [3000, 3001];
 
+//Ruta de Ngrok para la APP
+const NGROK_URL = 'https://a42f-189-28-66-50.ngrok-free.app';
+const LOGIN_URL = `${NGROK_URL}/loginEstudianteToken`;
+const LOGOUT_URL = `${NGROK_URL}/logoutEstudiante`;
+const EXAMENES_POR_NIVEL_URL = `${NGROK_URL}/examenesPorNivel`;
 
 function checkPort(port) {
   return new Promise((resolve, reject) => {
@@ -98,7 +106,7 @@ mongoose.connect('mongodb+srv://antoniotaboada777:0ZJ1alGXsIqPOzln@cluster0.kxio
 // Middleware para Express
 appExpress.use(bodyParser.json());
 appExpress.use(bodyParser.urlencoded({ extended: true }));
-appExpress.use('/uploads', express.static('uploads'));
+appExpress.use('/audios', express.static(path.join(__dirname, '../src/view/audios')));
 
 // Configuración de socket.io
 io.on('connection', (socket) => {
@@ -108,81 +116,146 @@ io.on('connection', (socket) => {
   });
 });
 
+// Ruta para obtener los temas por tomo (libro)
+appExpress.get('/api/temas', async (req, res) => {
+  try {
+    const { tomo } = req.query; // Obtener el parámetro de consulta tomo
+    if (!tomo) {
+      return res.status(400).send('Falta el parámetro tomo');
+    }
+
+    // Buscar temas por el tomo seleccionado
+    const temas = await Libros.find({ tomo }).select('tema -_id'); // Selecciona solo los temas del tomo
+    res.status(200).json(temas); // Devuelve los temas asociados a ese tomo
+  } catch (error) {
+    console.error('Error al obtener los temas:', error);
+    res.status(500).send('Error al obtener los temas');
+  }
+});
+
+// Ruta para guardar un nuevo Tema en un libro
+appExpress.post('/api/libros', async (req, res) => {
+  const { tomo, nivel, tema } = req.body;
+
+  try {
+    const nuevoLibro = new Libros({ tomo, nivel, tema });
+    await nuevoLibro.save();
+    res.status(201).send('Tema guardado exitosamente');
+  } catch (error) {
+    console.error('Error al guardar el tema:', error);
+    res.status(500).send('Error al guardar el tema');
+  }
+});
+
+// Ruta para obtener todos los libros registrados
+appExpress.get('/api/libros', async (req, res) => {
+  try {
+    const libros = await Libros.find();
+    res.status(200).json(libros);
+  } catch (error) {
+    console.error('Error al obtener los temas:', error);
+    res.status(500).send('Error al obtener los temas');
+  }
+});
+
+// Ruta para eliminar un libro por ID
+appExpress.delete('/api/libros/:id', async (req, res) => {
+  try {
+    await Libros.findByIdAndDelete(req.params.id);
+    res.status(200).send('Tema eliminado exitosamente');
+  } catch (error) {
+    console.error('Error al eliminar el tema:', error);
+    res.status(500).send('Error al eliminar el tema');
+  }
+});
+
+// Ruta para actualizar un libro por ID
+appExpress.put('/api/libros/:id', async (req, res) => {
+  const { tomo, nivel, tema } = req.body;
+  
+  try {
+    const libro = await Libros.findByIdAndUpdate(req.params.id, { tomo, nivel, tema }, { new: true });
+    res.status(200).send('Tema actualizado exitosamente');
+  } catch (error) {
+    console.error('Error al actualizar el tema:', error);
+    res.status(500).send('Error al actualizar el tema');
+  }
+});
+
+// Ruta para crear un nuevo registro que relacione un examen con el resultado de un estudiante
+appExpress.post('/crearRegistro', async (req, res) => {
+  const { examenId, resultadoId } = req.body;
+
+  try {
+    const examen = await Examen.findById(examenId);
+    const resultado = await Resultado.findById(resultadoId);
+
+    if (!examen || !resultado) {
+      return res.status(404).json({ message: 'Examen o Resultado no encontrado' });
+    }
+
+    const nuevoRegistro = new Registro({ examen: examenId, resultado: resultadoId });
+    await nuevoRegistro.save();
+
+    res.status(201).json({ message: 'Registro creado con éxito', registro: nuevoRegistro });
+  } catch (error) {
+    console.error('Error al crear el registro:', error);
+    res.status(500).json({ message: 'Error al crear el registro', error });
+  }
+});
+
+// Ruta para obtener los registros (para los reportes)
+appExpress.get('/obtenerRegistros', async (req, res) => {
+  try {
+    const { libro } = req.query;  // Obtener el filtro de libro de la consulta
+    let query = {};
+
+    if (libro) {
+      query['examen.libro'] = libro;  // Filtro por libro
+    }
+
+    const registros = await Registro.find(query).populate('examen').populate('resultado');
+    res.status(200).json(registros);
+  } catch (error) {
+    console.error('Error al obtener los registros:', error);
+    res.status(500).json({ message: 'Error al obtener los registros', error });
+  }
+});
+
 //Ruta para obtener los datos del estudiante por el token
 appExpress.get('/obtenerExamenPorToken', async (req, res) => {
   const { token } = req.query;
 
   try {
-    // Verificar si el examen ya ha sido resuelto
-    const resultado = await Resultado.findOne({ token });
-    if (resultado) {
-      return res.status(400).json({ message: 'Este examen ya ha sido resuelto.' });
-    }
-
-    // Buscar el examen utilizando el token
     const examen = await Examen.findOne({ token });
 
     if (!examen) {
       return res.status(404).json({ message: 'Token no encontrado' });
     }
 
-    // Buscar el estudiante asociado al examen
-    const estudiante = await Estudiante.findOne({ examenAsignado: token });
-
-    if (!estudiante) {
-      return res.status(404).json({ message: 'Estudiante no encontrado' });
-    }
-
-    // Enviar la respuesta con los datos del estudiante, el examen y el nivel
+    // Devolver solo los datos del examen
     res.json({
       exito: true,
-      estudiante: {
-        nombre: estudiante.nombre,
-        apellido: estudiante.apellido,
-        apellido2: estudiante.apellido2,  
-        nivel: estudiante.nivel           
-      },
       preguntas: examen.preguntas,
-      tiempoRestante: examen.tiempo 
+      tiempoRestante: examen.tiempo,  // En segundos
     });
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener el examen', error });
   }
 });
-
-
-// preguntas con carga de audio
-appExpress.post('/preguntas', upload.single('audio'), async (req, res) => {
-  const { tipo, pregunta, opciones, respuestaCorrecta, dificultad } = req.body;
-  const audio = req.file ? req.file.path : undefined;
-
-  const nuevaPregunta = new Pregunta({
-    tipo,
-    pregunta,
-    opciones: tipo !== 'listening' ? opciones.split(',') : undefined,
-    respuestaCorrecta,
-    dificultad,
-    audio
-  });
-
-  try {
-    await nuevaPregunta.save();
-    res.status(201).send('Pregunta registrada exitosamente');
-  } catch (err) {
-    console.error('Error al registrar la pregunta:', err);
-    res.status(400).send('Error al registrar la pregunta');
-  }
-});
-
-
-// Calificar examen y guardar resultado
+// Ruta de calificación de examen
 appExpress.post('/calificarExamen', async (req, res) => {
-  const { token, nombre, apellido, respuestas } = req.body;
+  const { token, nombre, apellido, apellido2, respuestas, horaInicio, horaFin } = req.body;
 
   try {
-    console.log('Datos recibidos:', { token, respuestas });
+    console.log('Datos recibidos:', { token, nombre, apellido, apellido2, respuestas, horaInicio, horaFin });
 
     let correctas = 0;
+
+    // Asegurarse de que `respuestas` sea un array válido
+    if (!Array.isArray(respuestas)) {
+      return res.status(400).send('Las respuestas deben ser un array válido.');
+    }
 
     const detalles = respuestas.map((respuesta, index) => {
       const esCorrecta = respuesta.respuestaSeleccionada === respuesta.respuestaCorrecta;
@@ -197,22 +270,51 @@ appExpress.post('/calificarExamen', async (req, res) => {
     }).join('');
 
     const total = respuestas.length;
-    const nota = parseFloat(((correctas / total) * 10).toFixed(2)); 
+    const nota = parseFloat(((correctas / total) * 10).toFixed(2));
 
+    // Convertir horaInicio y horaFin en objetos Date
+    const inicio = new Date(horaInicio);
+    const fin = new Date(horaFin);
+
+    // Calcular la diferencia en minutos
+    const tiempoTranscurridoMs = fin - inicio;
+    const tiempoTranscurridoMin = Math.floor(tiempoTranscurridoMs / 60000);
+
+    // Buscar el examen utilizando el token
+    const examen = await Examen.findOne({ token });
+    if (!examen) {
+      return res.status(404).json({ message: 'Examen no encontrado' });
+    }
+
+    // Crear un nuevo resultado con todos los campos necesarios
     const nuevoResultado = new Resultado({
       token,
       nombre,
       apellido,
+      apellido2,
       correctas,
       total,
-      nota 
+      nota,
+      horaInicio: inicio,
+      horaFin: fin,
+      tiempoTranscurrido: tiempoTranscurridoMin,
+      titulo: examen.titulo, // Agregando el título del examen
+      id_examen: examen._id // Agregando el ID del examen
     });
 
     await nuevoResultado.save();
 
-    console.log('Examen calificado:', { correctas, total, nota, detalles });
+    // Crear un registro que relacione el examen con el resultado
+    const nuevoRegistro = new Registro({
+      examen: examen._id,
+      resultado: nuevoResultado._id
+    });
 
-    res.send({ correctas, total, nota, detalles });
+    await nuevoRegistro.save();
+
+    console.log('Examen calificado y registro creado:', { correctas, total, nota, detalles, tiempoTranscurridoMin, registro: nuevoRegistro });
+
+    res.send({ correctas, total, nota, detalles, tiempoTranscurrido: tiempoTranscurridoMin });
   } catch (error) {
     console.error('Error al calificar el examen:', error);
     res.status(500).send('Error al calificar el examen');
@@ -230,6 +332,44 @@ appExpress.get('/obtenerResultados', async (req, res) => {
   }
 });
 
+// Ruta para obtener la cantidad de libros utilizados Grafico
+appExpress.get('/obtenerLibrosUtilizados', async (req, res) => {
+  try {
+      const libros = await Examen.aggregate([
+          { $group: { _id: "$libro", count: { $sum: 1 } } },
+          { $sort: { _id: 1 } } // Ordenar por el identificador del libro para claridad
+      ]);
+
+      // Mapear los resultados para incluir los nombres de los libros si es necesario
+      const librosConNombres = libros.map(libro => {
+          return {
+              libro: `Libro ${libro._id}`, // Esto asume que "libro" es un número que representa el libro
+              cantidad: libro.count
+          };
+      });
+
+      res.json(librosConNombres);
+  } catch (error) {
+      console.error('Error al obtener los libros utilizados:', error);
+      res.status(500).send('Error al obtener los libros utilizados');
+  }
+});
+
+appExpress.get('/obtenerExamenesPorNivel', async (req, res) => {
+  try {
+      const niveles = await Examen.aggregate([
+          { $group: { _id: "$dificultad", count: { $sum: 1 } } }
+      ]);
+
+      console.log('Niveles agrupados:', niveles); 
+
+      res.json(niveles);
+  } catch (error) {
+      console.error('Error al obtener los exámenes por nivel:', error);
+      res.status(500).send('Error al obtener los exámenes por nivel');
+  }
+});
+
 // Eliminar examen
 appExpress.delete('/eliminarExamen/:id', async (req, res) => {
   const examenId = req.params.id;
@@ -243,30 +383,51 @@ appExpress.delete('/eliminarExamen/:id', async (req, res) => {
   }
 });
 
+// Función para detectar el nivel según el libro
+function detectarNivelPorLibro(libro) {
+  const libroNumero = parseInt(libro, 10); // Convertir libro a número, por si viene como cadena
+
+  if (libroNumero >= 1 && libroNumero <= 9) {
+    return 'Básico';  // Nivel básico
+  } else if (libroNumero >= 10 && libroNumero <= 19) {
+    return 'Intermedio';  // Nivel intermedio
+  } else if (libroNumero >= 20 && libroNumero <= 30) {
+    return 'Avanzado';  // Nivel avanzado
+  } else {
+    return 'Básico';  // Por defecto, nivel básico
+  }
+}
 
 // Rutas para examenes
 appExpress.post('/generarExamen', async (req, res) => {
-  const { titulo, descripcion, tema, libro, tiposPreguntas, numeroOpciones, dificultad, contenidoHTML, fechaCreacion, tiempo } = req.body;
+  const { titulo, descripcion, tema, libro, tiposPreguntas, numeroOpciones, contenidoHTML, fechaCreacion, horaInicio, horaFin } = req.body;
 
   console.log('Datos recibidos:', req.body);
 
-  const { preguntas, token, creationTime, expiresAt, palabrasClave } = generateQuestions(tema, tiposPreguntas, numeroOpciones, dificultad);
+  // Generar las preguntas
+  const { preguntas, token, creationTime, expiresAt, palabrasClave } = generateQuestions(tema, tiposPreguntas, numeroOpciones, libro);
 
   if (!preguntas || preguntas.length === 0) {
     console.error('Error al generar preguntas: No se generaron preguntas');
     return res.status(400).send('Error al generar preguntas: No se generaron preguntas');
   }
 
+  // Ajuste automático del tiempo basado en los tipos de preguntas
+  let tiempo = 10; // Tiempo por defecto en minutos
+  if (tiposPreguntas.includes('listening')) {
+    tiempo = 15; // Si se selecciona Listening, se asigna 15 minutos
+  }
+
   const preguntasConAudios = preguntas.map((pregunta, index) => {
     let nivel;
-    switch (dificultad) {
-      case 'basico':
+    switch (detectarNivelPorLibro(libro)) {
+      case 'facil':
         nivel = 'audio_basico';
         break;
-      case 'intermedio':
+      case 'medio':
         nivel = 'audio_intermedio';
         break;
-      case 'avanzado':
+      case 'dificil':
         nivel = 'audio_avanzado';
         break;
       default:
@@ -275,12 +436,13 @@ appExpress.post('/generarExamen', async (req, res) => {
 
     return {
       ...pregunta,
-      audioUrl: `./audios/${nivel}${index + 1}.mp3`
+      audioUrl: `/audios/${nivel}${index + 1}.mp3`
     };
   });
 
   console.log('Preguntas con audios:', preguntasConAudios);
 
+  // Asegúrate de incluir tanto horaInicio como horaFin al crear el nuevo examen
   const nuevoExamen = new Examen({
     titulo,
     descripcion,
@@ -289,13 +451,15 @@ appExpress.post('/generarExamen', async (req, res) => {
     tipo: tiposPreguntas.join(','),
     incluyeImagenes: false,
     preguntas: preguntasConAudios,
-    dificultad,
+    dificultad: detectarNivelPorLibro(libro), // Determinar la dificultad según el libro
     token,
     contenidoHTML,
     fechaCreacion: fechaCreacion ? new Date(fechaCreacion) : new Date(),
-    tiempo: parseInt(tiempo, 10) * 60, // Convertir minutos a segundos
+    tiempo: tiempo * 60, // Convertir el tiempo de minutos a segundos
     expiresAt,
-    palabrasClave
+    palabrasClave,
+    horaInicio: new Date(horaInicio),  // Incluir el campo horaInicio
+    horaFin: new Date(horaFin)  // Incluir el campo horaFin
   });
 
   try {
@@ -308,27 +472,42 @@ appExpress.post('/generarExamen', async (req, res) => {
 });
 
 appExpress.post('/verificarToken', async (req, res) => {
-  const { token } = req.body;
+  let { token, nombre, apellido, apellido2 } = req.body;
+
+  // Normalizar el token para evitar diferencias debido a caracteres invisibles
+  token = token.trim().normalize();
 
   try {
-    // Verificar si el examen ya ha sido resuelto
-    const resultado = await Resultado.findOne({ token });
-    if (resultado) {
-      return res.status(400).json({ message: 'Este examen ya ha sido resuelto.' });
+    // Verificar si el estudiante ya ha resuelto algún examen
+    const resultadoPorEstudiante = await Resultado.findOne({ nombre, apellido, apellido2 });
+    if (resultadoPorEstudiante) {
+      return res.status(400).json({ message: 'Usted ya resolvió un examen.' });
     }
 
-    // Verificar si el token es válido y está asociado con un examen
+    // Verificación del token en la tabla de exámenes
     const examen = await Examen.findOne({ token });
-
     if (!examen) {
       return res.status(400).json({ message: 'Token no válido o expirado' });
     }
 
     const now = new Date();
+
+    // Verificar si el examen aún no ha comenzado
+    if (now < new Date(examen.horaInicio)) {
+      return res.status(400).json({ message: `El examen estará disponible a partir de las ${examen.horaInicio.toLocaleString()}` });
+    }
+
+    // Verificar si el examen ya ha terminado
+    if (now > new Date(examen.horaFin)) {
+      return res.status(400).json({ message: `El examen ya no está disponible, el tiempo límite fue ${examen.horaFin.toLocaleString()}` });
+    }
+
+    // Verificar expiración del token
     if (now > new Date(examen.expiresAt)) {
       return res.status(400).json({ message: 'Token no válido o expirado' });
     }
 
+    // Si todo está correcto, permitir acceso al examen
     res.json({ message: 'Token válido', examen });
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener el examen', error });
@@ -348,11 +527,36 @@ appExpress.delete('/examenes/:id', async (req, res) => {
 
 appExpress.get('/examenes', async (req, res) => {
   try {
-    const examenes = await Examen.find();
-    res.json(examenes);
+      const examenes = await Examen.find();
+
+      // Mapear los exámenes para cambiar los valores de dificultad
+      const examenesConDificultadModificada = examenes.map(examen => {
+          let dificultadMostrar = '';
+          switch (examen.dificultad) {
+              case 'facil':
+                  dificultadMostrar = 'Básico';
+                  break;
+              case 'medio':
+                  dificultadMostrar = 'Intermedio';
+                  break;
+              case 'dificil':
+                  dificultadMostrar = 'Avanzado';
+                  break;
+              default:
+                  dificultadMostrar = examen.dificultad;
+          }
+
+          // Retornar el examen con la dificultad traducida
+          return {
+              ...examen._doc,  
+              dificultad: dificultadMostrar  
+          };
+      });
+
+      res.json(examenesConDificultadModificada);
   } catch (err) {
-    console.error('Error al obtener los exámenes:', err);
-    res.status(500).send('Error al obtener los exámenes');
+      console.error('Error al obtener los exámenes:', err);
+      res.status(500).send('Error al obtener los exámenes');
   }
 });
 
@@ -394,8 +598,20 @@ appExpress.get('/preguntas', async (req, res) => {
   }
 });
 
+// Ruta para obtener una pregunta específica por su ID
+appExpress.get('/preguntas/:id', async (req, res) => {
+  try {
+    const pregunta = await Pregunta.findById(req.params.id);
+    res.json(pregunta);
+  } catch (err) {
+    console.error('Error al obtener la pregunta:', err);
+    res.status(500).send('Error al obtener la pregunta');
+  }
+});
+
+// Ruta para crear una nueva pregunta
 appExpress.post('/preguntas', upload.single('audio'), async (req, res) => {
-  const { tipo, pregunta, opciones, respuestaCorrecta, dificultad, tema, fechaExamen } = req.body;
+  const { tipo, pregunta, opciones, respuestaCorrecta, dificultad, libro } = req.body;
   const audio = req.file ? req.file.path : undefined;
 
   const nuevaPregunta = new Pregunta({
@@ -404,9 +620,8 @@ appExpress.post('/preguntas', upload.single('audio'), async (req, res) => {
     opciones: tipo !== 'listening' ? opciones.split(',') : undefined,
     respuestaCorrecta,
     dificultad,
-    tema,
-    audio,
-    fechaExamen: fechaExamen ? new Date(fechaExamen) : new Date()
+    libro,
+    audio
   });
 
   try {
@@ -418,6 +633,34 @@ appExpress.post('/preguntas', upload.single('audio'), async (req, res) => {
   }
 });
 
+// Ruta para actualizar una pregunta existente
+appExpress.put('/preguntas/:id', upload.single('audio'), async (req, res) => {
+  const { tipo, pregunta, opciones, respuestaCorrecta, dificultad, libro } = req.body;
+  const audio = req.file ? req.file.path : undefined;
+
+  const actualizaciones = {
+    tipo,
+    pregunta,
+    opciones: tipo !== 'listening' ? opciones.split(',') : undefined,
+    respuestaCorrecta,
+    dificultad,
+    libro
+  };
+
+  if (audio) {
+    actualizaciones.audio = audio;
+  }
+
+  try {
+    await Pregunta.findByIdAndUpdate(req.params.id, actualizaciones);
+    res.status(200).send('Pregunta actualizada exitosamente');
+  } catch (err) {
+    console.error('Error al actualizar la pregunta:', err);
+    res.status(400).send('Error al actualizar la pregunta');
+  }
+});
+
+// Ruta para eliminar una pregunta
 appExpress.delete('/preguntas/:id', async (req, res) => {
   try {
     await Pregunta.findByIdAndDelete(req.params.id);
@@ -428,6 +671,22 @@ appExpress.delete('/preguntas/:id', async (req, res) => {
   }
 });
 
+// Ruta para filtrar preguntas
+appExpress.get('/filtrarPreguntas', async (req, res) => {
+  const { libro, tipo } = req.query;
+
+  try {
+    let query = {};
+    if (libro) query.libro = libro;
+    if (tipo) query.tipo = tipo;
+
+    const preguntasFiltradas = await Pregunta.find(query);
+    res.json(preguntasFiltradas);
+  } catch (err) {
+    console.error('Error al filtrar preguntas:', err);
+    res.status(500).send('Error al filtrar preguntas');
+  }
+});
 
 function createExamenWindow() {
   const examenWindow = new BrowserWindow({
@@ -479,17 +738,15 @@ appExpress.get('/estudiantes/:id', async (req, res) => {
 
 //ruta para registro de estudiantes
 appExpress.post('/registro', async (req, res) => {
-  const { nombre, apellido, apellido2, fechaDeNacimiento, email, telefono, nivel, examenAsignado } = req.body;
+  const { nombre, apellido, apellido2, fechaDeNacimiento, email, telefono, nivel, libro } = req.body;
 
   try {
-    // Verificar si ya existe un estudiante con el mismo email o teléfono
     const estudianteExistente = await Estudiante.findOne({ $or: [{ email }, { telefono }] });
 
     if (estudianteExistente) {
       return res.status(400).send('El correo electrónico o el teléfono ya están registrados.');
     }
 
-    // Si no existe, crear un nuevo estudiante
     const nuevoEstudiante = new Estudiante({
       nombre,
       apellido,
@@ -498,7 +755,7 @@ appExpress.post('/registro', async (req, res) => {
       email,
       telefono,
       nivel,
-      examenAsignado
+      libro  
     });
 
     await nuevoEstudiante.save();
@@ -510,68 +767,41 @@ appExpress.post('/registro', async (req, res) => {
 });
 
 
-// Ruta para asignar examen a un estudiante
-appExpress.post('/asignarExamen', async (req, res) => {
-  const { estudianteId, examenToken } = req.body;
-
-  try {
-    // Verificar si el examen ya ha sido asignado a otro estudiante
-    const estudianteConExamen = await Estudiante.findOne({ examenAsignado: examenToken });
-
-    if (estudianteConExamen) {
-      return res.status(400).send('Este examen ya ha sido asignado a otro estudiante.');
-    }
-
-    // Asignar el examen al estudiante si no ha sido asignado a otro estudiante
-    const estudiante = await Estudiante.findById(estudianteId);
-    if (!estudiante) {
-      return res.status(404).send('Estudiante no encontrado');
-    }
-
-    estudiante.examenAsignado = examenToken;
-    await estudiante.save();
-
-    res.status(200).send('Examen asignado exitosamente');
-  } catch (error) {
-    console.error('Error al asignar el examen:', error);
-    res.status(500).send('Error al asignar el examen');
-  }
-});
-
 // Ruta para obtener exámenes clasificados por nivel
 appExpress.get('/examenesPorNivel', async (req, res) => {
+  const nivel = req.query.nivel;
   try {
-      const basico = await Examen.find({ dificultad: 'facil' }).select('token');
-      const intermedio = await Examen.find({ dificultad: 'medio' }).select('token');
-      const avanzado = await Examen.find({ dificultad: 'dificil' }).select('token');
+    let examenes;
 
-      console.log('Exámenes básicos:', basico);
-      console.log('Exámenes intermedios:', intermedio);
-      console.log('Exámenes avanzados:', avanzado);
+    if (nivel === 'basico') {
+      examenes = await Examen.find({ dificultad: 'facil' }).select('token');
+    } else if (nivel === 'intermedio') {
+      examenes = await Examen.find({ dificultad: 'medio' }).select('token');
+    } else if (nivel === 'avanzado') {
+      examenes = await Examen.find({ dificultad: 'dificil' }).select('token');
+    } else {
+      return res.status(400).send('Nivel no válido');
+    }
 
-      res.json({ basico, intermedio, avanzado });
+    const tokens = examenes.map(examen => examen.token);
+    res.json({ tokens });
   } catch (error) {
-      console.error('Error al obtener los exámenes por nivel:', error);
-      res.status(500).send('Error al obtener los exámenes por nivel');
+    console.error('Error al obtener los exámenes por nivel:', error);
+    res.status(500).send('Error al obtener los exámenes por nivel');
   }
 });
 
 //ruta para acualizar estudiante
 appExpress.put('/estudiantes/:id', async (req, res) => {
-  const { nombre, apellido, apellido2, fechaDeNacimiento, email, telefono, nivel, examenAsignado } = req.body;
+  const { nombre, apellido, apellido2, fechaDeNacimiento, email, telefono, nivel, libro } = req.body;
 
   try {
-    // Verificar si ya existe un estudiante con el mismo email o teléfono, excluyendo al estudiante que se está actualizando
-    const estudianteExistente = await Estudiante.findOne({ 
-      $or: [{ email }, { telefono }],
-      _id: { $ne: req.params.id }  // Excluir el estudiante que se está actualizando
-    });
+    const estudianteExistente = await Estudiante.findOne({ $or: [{ email }, { telefono }], _id: { $ne: req.params.id } });
 
     if (estudianteExistente) {
       return res.status(400).send('El correo electrónico o el teléfono ya están registrados.');
     }
 
-    // Si no hay conflicto, actualizar el estudiante
     await Estudiante.findByIdAndUpdate(req.params.id, {
       nombre,
       apellido,
@@ -580,7 +810,7 @@ appExpress.put('/estudiantes/:id', async (req, res) => {
       email,
       telefono,
       nivel,
-      examenAsignado
+      libro  // Asegúrate de actualizar aquí el campo libro
     }, { new: true });
 
     res.status(200).send('Estudiante actualizado exitosamente');
@@ -601,276 +831,327 @@ appExpress.delete('/estudiantes/:id', async (req, res) => {
   }
 });
 
-// Generacion de reportes 
-appExpress.get('/generarReporte', async (req, res) => {
-  const { nombre, apellido, libro } = req.query;
+// ruta para obtener las evaluaciones de un estudiante específico
+appExpress.get('/evaluacionesEstudiante', async (req, res) => {
+  const { nombre, apellido, apellido2 } = req.query;
 
   try {
-    const estudiantes = await Estudiante.find({
-      nombre: { $regex: new RegExp(nombre, 'i') },
-      apellido: { $regex: new RegExp(apellido, 'i') }
-    });
+      const evaluaciones = await Resultado.find({
+          nombre: new RegExp(nombre, 'i'),
+          apellido: new RegExp(apellido, 'i'),
+          apellido2: new RegExp(apellido2, 'i')
+      });
 
-    if (estudiantes.length === 0) {
-      return res.status(404).send('No se encontraron datos para el estudiante especificado');
-    }
-
-    // Buscar notas del estudiante
-    const resultados = await Resultado.find({
-      nombre: { $regex: new RegExp(nombre, 'i') },
-      apellido: { $regex: new RegExp(apellido, 'i') }
-    });
-
-    // Buscar exámenes resueltos basados en los tokens de los resultados
-    const tokens = resultados.map(resultado => resultado.token);
-
-    const examenes = await Examen.find({ 
-      token: { $in: tokens },
-      libro: { $regex: new RegExp(libro, 'i') }  // Filtrar por libro
-    });
-
-    // Si no hay exámenes del libro especificado, enviar un mensaje
-    if (examenes.length === 0) {
-      return res.status(404).send('No se encontraron exámenes del libro especificado');
-    }
-
-    let reporteHTML = `
-      <html lang="es">
-      <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Reporte de ${nombre} ${apellido}</title>
-          <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-          <style>
-              body {
-                  font-family: Arial, sans-serif;
-                  background-color: #f8f9fa;
-                  padding: 20px;
-              }
-              .container {
-                  background-color: #ffffff;
-                  padding: 20px;
-                  border-radius: 8px;
-                  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                  margin-bottom: 20px;
-                  overflow: hidden;
-              }
-              .table {
-                  margin-top: 20px;
-                  table-layout: auto;
-                  width: 100%;
-              }
-              .table th, .table td {
-                  text-align: center;
-                  vertical-align: middle;
-              }
-              .header, .subheader {
-                  background-color: #007bff;
-                  color: #ffffff;
-                  padding: 10px;
-                  border-radius: 8px 8px 0 0;
-                  text-align: center;
-                  margin-bottom: 10px;
-              }
-              .header h1, .subheader h2 {
-                  margin: 0;
-              }
-              .print-btn {
-                  margin-top: 20px;
-                  display: flex;
-                  justify-content: center;
-              }
-              .print-btn button {
-                  background-color: #007bff;
-                  color: white;
-                  border: none;
-                  padding: 10px 20px;
-                  font-size: 16px;
-                  border-radius: 5px;
-                  cursor: pointer;
-              }
-              .print-btn button:hover {
-                  background-color: #0056b3;
-              }
-              @media print {
-                  body {
-                      background-color: #ffffff;
-                  }
-                  .container {
-                      box-shadow: none;
-                  }
-                  .print-btn {
-                      display: none;
-                  }
-              }
-              .info-icon {
-                  margin-right: 5px;
-              }
-              .table thead th {
-                  font-size: 16px;
-                  font-weight: bold;
-              }
-              .table tbody td {
-                  font-size: 14px;
-              }
-          </style>
-      </head>
-      <body>
-          <div class="container" style="max-width: 100%;">
-              <div class="header">
-                  <h1><i class="fas fa-file-alt info-icon"></i>Reporte de ${nombre} ${apellido}</h1>
-              </div>
-              <div class="subheader">
-                  <h2><i class="fas fa-user info-icon"></i>Información Personal</h2>
-              </div>
-              <table class="table table-bordered table-hover">
-                  <thead>
-                      <tr>
-                          <th><i class="fas fa-user"></i> Nombre</th>
-                          <th><i class="fas fa-user"></i> Apellido</th>
-                          <th><i class="fas fa-user"></i> Segundo Apellido</th>
-                          <th><i class="fas fa-calendar-alt"></i> Fecha de Nacimiento</th>
-                          <th><i class="fas fa-envelope"></i> Email</th>
-                          <th><i class="fas fa-phone"></i> Teléfono</th>
-                      </tr>
-                  </thead>
-                  <tbody>
-    `;
-
-    estudiantes.forEach(est => {
-      reporteHTML += `
-        <tr>
-          <td>${est.nombre}</td>
-          <td>${est.apellido}</td>
-          <td>${est.apellido2}</td>
-          <td>${est.fechaDeNacimiento.toISOString().split('T')[0]}</td>
-          <td>${est.email}</td>
-          <td>${est.telefono}</td>
-        </tr>
-      `;
-    });
-
-    reporteHTML += `
-                  </tbody>
-              </table>
-              <div class="subheader">
-                  <h2><i class="fas fa-clipboard-check info-icon"></i>Notas de Exámenes</h2>
-              </div>
-              <table class="table table-bordered table-hover">
-                  <thead>
-                      <tr>
-                          <th><i class="fas fa-key"></i> Token</th>
-                          <th><i class="fas fa-check"></i> Correctas</th>
-                          <th><i class="fas fa-list"></i> Total</th>
-                          <th><i class="fas fa-clipboard-check"></i> Nota</th>
-                      </tr>
-                  </thead>
-                  <tbody>
-    `;
-
-    resultados.forEach(resultado => {
-      reporteHTML += `
-        <tr>
-          <td>${resultado.token}</td>
-          <td>${resultado.correctas}</td>
-          <td>${resultado.total}</td>
-          <td>${resultado.nota}</td>
-        </tr>
-      `;
-    });
-
-    reporteHTML += `
-                  </tbody>
-              </table>
-              <div class="subheader">
-                  <h2><i class="fas fa-book info-icon"></i>Detalles del Examen</h2>
-              </div>
-              <table class="table table-bordered table-hover">
-                  <thead>
-                      <tr>
-                          <th><i class="fas fa-key"></i> Token</th>
-                          <th><i class="fas fa-book"></i> Título</th>
-                          <th><i class="fas fa-info-circle"></i> Descripción</th>
-                          <th><i class="fas fa-book"></i> Tema</th>
-                          <th><i class="fas fa-book"></i> Libro</th>
-                          <th><i class="fas fa-signal"></i> Dificultad</th>
-                          <th><i class="fas fa-clock"></i> Tiempo (minutos)</th>
-                          <th><i class="fas fa-calendar-alt"></i> Fecha de Creación</th>
-                      </tr>
-                  </thead>
-                  <tbody>
-    `;
-
-    examenes.forEach(examen => {
-      const tiempoMinutos = (examen.tiempo / 60).toFixed(2); // Convertir tiempo a minutos y redondear a 2 decimales
-      reporteHTML += `
-        <tr>
-          <td>${examen.token}</td>
-          <td>${examen.titulo}</td>
-          <td>${examen.descripcion}</td>
-          <td>${examen.tema}</td>
-          <td>${examen.libro}</td>
-          <td>${examen.dificultad}</td>
-          <td>${tiempoMinutos}</td>
-          <td>${new Date(examen.fechaCreacion).toISOString().split('T')[0]}</td>
-        </tr>
-      `;
-    });
-
-    reporteHTML += `
-                  </tbody>
-              </table>
-              <div class="subheader">
-                  <h2><i class="fas fa-book info-icon"></i>Libros Utilizados en los Exámenes</h2>
-              </div>
-              <table class="table table-bordered table-hover">
-                  <thead>
-                      <tr>
-                          <th><i class="fas fa-book"></i> Libro</th>
-                          <th><i class="fas fa-list"></i> Cantidad de Exámenes</th>
-                      </tr>
-                  </thead>
-                  <tbody>
-    `;
-
-    // Contar la cantidad de exámenes por libro
-    const librosConteo = {};
-    examenes.forEach(examen => {
-      if (librosConteo[examen.libro]) {
-        librosConteo[examen.libro]++;
-      } else {
-        librosConteo[examen.libro] = 1;
+      if (evaluaciones.length === 0) {
+          return res.json({ message: 'No se encontraron evaluaciones para este estudiante.' });
       }
-    });
 
-    Object.keys(librosConteo).forEach(libro => {
-      reporteHTML += `
-        <tr>
-          <td>${libro}</td>
-          <td>${librosConteo[libro]}</td>
-        </tr>
-      `;
-    });
+      res.json(evaluaciones);
+  } catch (error) {
+      console.error('Error al buscar evaluaciones:', error);
+      res.status(500).json({ message: 'Error al buscar evaluaciones' });
+  }
+});
 
-    reporteHTML += `
-                  </tbody>
-              </table>
-              <div class="print-btn">
-                  <button onclick="window.print()"><i class="fas fa-print"></i> Imprimir Reporte</button>
-              </div>
-          </div>
-      </body>
-      </html>
-    `;
+//Ruta para generar Reportes
+appExpress.get('/generarReporte', async (req, res) => {
+  console.log(req.query);
+  const { estado, nombre, apellido, apellido2, libro, tema, incluirInscritos } = req.query;
 
-    res.send(reporteHTML);
-  } catch (err) {
-    console.error('Error al generar el reporte:', err);
+  const horaInicio = new Date();
+
+  try {
+    let query = {};
+    let resultadosGenerales = [];
+    let registrosLibroTema = [];
+    let estudiantes = [];
+
+    // Dependiendo de los parámetros del filtro, generamos un tipo de reporte
+    let isFilteredByEstudiantes = incluirInscritos === 'true';
+    let isFilteredByLibro = libro || tema;
+    let isFilteredByEstado = estado || nombre || apellido || apellido2;
+
+    // Filtrar por estudiantes inscritos
+    if (isFilteredByEstudiantes) {
+      estudiantes = await Estudiante.find(); // Obtener todos los estudiantes si se solicitó
+    }
+
+    // Filtrar por libro o tema
+    if (isFilteredByLibro) {
+      registrosLibroTema = await Registro.find().populate('examen').populate('resultado');
+
+      if (libro) {
+        registrosLibroTema = registrosLibroTema.filter(registro => registro.examen.libro === libro);
+      }
+      if (tema) {
+        registrosLibroTema = registrosLibroTema.filter(registro => registro.examen.tema.toLowerCase().includes(tema.toLowerCase()));
+      }
+    }
+
+    // Filtrar por nombre, apellido, estado
+    if (isFilteredByEstado) {
+      resultadosGenerales = await Resultado.find();  // Esto traerá todos los resultados sin filtrar
+
+      // Aplicar filtros por nombre, apellido o estado
+      if (nombre) {
+        resultadosGenerales = resultadosGenerales.filter(resultado => resultado.nombre.toLowerCase().includes(nombre.toLowerCase()));
+      }
+      if (apellido) {
+        resultadosGenerales = resultadosGenerales.filter(resultado => resultado.apellido.toLowerCase().includes(apellido.toLowerCase()));
+      }
+      if (apellido2) {
+        resultadosGenerales = resultadosGenerales.filter(resultado => resultado.apellido2 && resultado.apellido2.toLowerCase().includes(apellido2.toLowerCase()));
+      }
+      if (estado === 'aprobado') {
+        resultadosGenerales = resultadosGenerales.filter(resultado => resultado.nota >= 6);  // Filtrar aprobados
+      } else if (estado === 'reprobado') {
+        resultadosGenerales = resultadosGenerales.filter(resultado => resultado.nota < 6);  // Filtrar reprobados
+      }
+    }
+
+    // Validar que al menos haya resultados
+    if (resultadosGenerales.length === 0 && registrosLibroTema.length === 0 && estudiantes.length === 0) {
+      const doc = new PDFDocument({ margin: 30 });
+      doc.fontSize(14).text('No se encontraron resultados ni estudiantes inscritos', { align: 'center' });
+      doc.end();
+      return doc.pipe(res);
+    }
+
+    // Crear un nuevo PDF y reiniciar el contenido
+    const doc = new PDFDocument({ margin: 0 });
+    let filename = 'Reporte.pdf';
+    let title = 'Reporte de Evaluaciones';
+
+    // Definir el título y nombre del archivo basado en los parámetros
+if (incluirInscritos === 'true') {
+  filename = 'Reporte_Inscritos.pdf';
+  title = 'Reporte de Estudiantes Inscritos';
+} else if (nombre && apellido) {
+  // Si se filtra por nombre y apellido, cambiar el título a "Reporte del estudiante [Nombre Completo]"
+  let nombreCompleto = `${nombre} ${apellido}`;
+  if (apellido2) {
+      nombreCompleto += ` ${apellido2}`;
+  }
+  filename = `Reporte_${nombre}.pdf`;
+  title = `Reporte del estudiante ${nombreCompleto}`;  // Cambia el título a "Reporte del estudiante [Nombre Completo]"
+} else if (estado) {
+  filename = `Reporte_${estado}.pdf`;
+  title = `Reporte de Estudiantes ${estado.charAt(0).toUpperCase() + estado.slice(1)}`;
+} else if (libro) {
+  filename = `Reporte_Libro_${libro}.pdf`;
+  title = `Reporte de Evaluaciones por Libro`;
+} else if (tema) {
+  filename = `Reporte_Tema_${tema}.pdf`;
+  title = `Reporte de Evaluaciones por Tema`;
+}
+
+    filename = encodeURIComponent(filename);
+    res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-type', 'application/pdf');
+
+    // Añadir un borde oscuro alrededor del contenido
+    doc.rect(20, 20, doc.page.width - 40, doc.page.height - 40).strokeColor('#004080').lineWidth(10).stroke();
+    doc.fillColor('#004080').polygon([20, 20], [60, 20], [20, 60]).fill();
+    doc.fillColor('#004080').polygon([doc.page.width - 20, doc.page.height - 20], [doc.page.width - 60, doc.page.height - 20], [doc.page.width - 20, doc.page.height - 60]).fill();
+
+    // Posicionar el escudo
+    const escudoPath = path.join(__dirname, 'view', 'img', 'EIE_ESCUDO.png');
+    doc.image(escudoPath, 70, 70, { width: 70 });
+    doc.font('Helvetica-Bold').fontSize(18).fillColor('black').text('Escuela de Idiomas del Ejército', 160, 90);
+    doc.moveDown(2);
+    doc.font('Helvetica-Bold').fontSize(20).fillColor('black').text(title, 70, 160, { align: 'left' });
+    doc.moveDown(1);
+
+    // Generar la tabla correcta según el filtro
+    if (isFilteredByEstudiantes) {
+      doc.fontSize(14).text('Estudiantes Inscritos:', { align: 'center' });
+      generateEstudiantesTable(doc, estudiantes);  // Asegúrate de que esta función esté definida
+    } else if (isFilteredByLibro) {
+      generateLibroTemaTable(doc, registrosLibroTema);  // Asegúrate de que esta función esté definida
+    } else if (isFilteredByEstado) {
+      generateStyledTable(doc, resultadosGenerales);  // Asegúrate de que esta función esté definida
+    }
+
+    // Agregar pie de página con fecha y hora
+    const horaFin = new Date();
+    const fechaActual = new Date().toLocaleDateString();
+    const horaInicioTexto = horaInicio.toLocaleTimeString();
+    const horaFinTexto = horaFin.toLocaleTimeString();
+    doc.fontSize(12).fillColor('black')
+      .text(`Fecha: ${fechaActual}`, doc.page.width - 150, doc.page.height - 80);
+    doc.fontSize(10).fillColor('black')
+      .text(`Reporte generado por Admin`, 30, doc.page.height - 50)
+      .text(`Generado el: ${fechaActual} a las ${horaFinTexto}`, 30, doc.page.height - 35);
+
+    // Finalizar el PDF
+    doc.end();
+    doc.pipe(res);
+  } catch (error) {
+    console.error('Error al generar el reporte:', error);
     res.status(500).send('Error al generar el reporte');
   }
 });
 
+function generateEstudiantesTable(doc, estudiantes) {
+  const tableTop = 250;  // Cambiar de 250 a 100 para comenzar más arriba si es necesario
+  const itemHeight = 20;
+  const cellWidths = [60, 60, 60, 150, 70, 70, 50];
+  const totalTableWidth = cellWidths.reduce((a, b) => a + b, 0);
+  const leftMargin = (doc.page.width - totalTableWidth) / 2;
+
+  // Dibujar el encabezado de la tabla
+  doc.fontSize(12).fillColor('white').rect(leftMargin, tableTop, totalTableWidth, itemHeight).fill('#007bff');
+  const headers = ["Nombre", "Paterno", "Materno", "Email", "Teléfono", "Nivel", "Libro"];  // Encabezados incluyendo "Libro"
+  headers.forEach((header, i) => {
+      doc.fillColor('white').font('Helvetica-Bold').text(header, leftMargin + cellWidths.slice(0, i).reduce((a, b) => a + b, 0) + 5, tableTop + 5, { width: cellWidths[i], align: 'center' });
+  });
+
+  // Dibujar las filas de los estudiantes
+  estudiantes.forEach((estudiante, i) => {
+      const y = tableTop + (i + 1) * itemHeight;
+      if (i % 2 === 0) {
+          doc.fillColor('#f9f9f9').rect(leftMargin, y, totalTableWidth, itemHeight).fill();  // Alternar color en las filas
+      }
+
+      let xPosition = leftMargin;
+      doc.fillColor('#333333').font('Helvetica');
+
+      // Convertir todo a cadena usando toString() si es necesario
+      doc.text(estudiante.nombre, xPosition + 5, y + 5, { width: cellWidths[0], align: 'center' });
+      xPosition += cellWidths[0];
+      doc.text(estudiante.apellido, xPosition + 5, y + 5, { width: cellWidths[1], align: 'center' });
+      xPosition += cellWidths[1];
+      doc.text(estudiante.apellido2 || '', xPosition + 5, y + 5, { width: cellWidths[2], align: 'center' });
+      xPosition += cellWidths[2];
+      doc.text(estudiante.email.toString(), xPosition + 5, y + 5, { width: cellWidths[3], align: 'center' });  // Asegurar que el email es una cadena
+      xPosition += cellWidths[3];
+      doc.text(estudiante.telefono.toString(), xPosition + 5, y + 5, { width: cellWidths[4], align: 'center' });
+      xPosition += cellWidths[4];
+      doc.text(estudiante.nivel, xPosition + 5, y + 5, { width: cellWidths[5], align: 'center' });
+      xPosition += cellWidths[5];
+      doc.text(estudiante.libro || 'N/A', xPosition + 5, y + 5, { width: cellWidths[6], align: 'center' });  // Mostrar el libro o "N/A" si no existe
+  });
+}
+
+// Función para generar la tabla de resultados generales
+function generateStyledTable(doc, resultados) {
+  const tableTop = 250;
+  const itemHeight = 20;
+  const cellWidths = [60, 60, 70, 60, 65, 60, 50, 70];  // Anchos de cada celda, incluyendo Tiempo
+  const totalTableWidth = cellWidths.reduce((a, b) => a + b, 0);
+  const leftMargin = (doc.page.width - totalTableWidth) / 2;
+
+  doc.fontSize(12).fillColor('white').rect(leftMargin, tableTop, totalTableWidth, itemHeight).fill('#007bff');
+  const headers = ["Nombre", "Paterno", "Materno", "Correctas", "Incorrectas", "Total", "Nota", "Tiempo"];
+  headers.forEach((header, i) => {
+      doc.fillColor('white').font('Helvetica-Bold').text(header, leftMargin + cellWidths.slice(0, i).reduce((a, b) => a + b, 0) + 5, tableTop + 5, { width: cellWidths[i], align: 'center' });
+  });
+
+  resultados.forEach((resultado, i) => {
+      const y = tableTop + (i + 1) * itemHeight;
+      if (i % 2 === 0) {
+          doc.fillColor('#f9f9f9').rect(leftMargin, y, totalTableWidth, itemHeight).fill();
+      }
+
+      let xPosition = leftMargin;
+      doc.fillColor('#333333').font('Helvetica');
+
+      doc.text(resultado.nombre, xPosition + 5, y + 5, { width: cellWidths[0], align: 'center' });
+      xPosition += cellWidths[0];
+      doc.text(resultado.apellido, xPosition + 5, y + 5, { width: cellWidths[1], align: 'center' });
+      xPosition += cellWidths[1];
+      doc.text(resultado.apellido2 || '', xPosition + 5, y + 5, { width: cellWidths[2], align: 'center' });
+      xPosition += cellWidths[2];
+      doc.text(resultado.correctas.toString(), xPosition + 5, y + 5, { width: cellWidths[3], align: 'center' });
+      xPosition += cellWidths[3];
+      const incorrectas = resultado.total - resultado.correctas;
+      doc.text(incorrectas.toString(), xPosition + 5, y + 5, { width: cellWidths[4], align: 'center' });
+      xPosition += cellWidths[4];
+      doc.text(resultado.total.toString(), xPosition + 5, y + 5, { width: cellWidths[5], align: 'center' });
+      xPosition += cellWidths[5];
+      doc.text(resultado.nota.toString(), xPosition + 5, y + 5, { width: cellWidths[6], align: 'center' });
+      xPosition += cellWidths[6];
+      doc.text(resultado.tiempoTranscurrido.toString() + " min", xPosition + 5, y + 5, { width: cellWidths[7], align: 'center' });
+  });
+}
+
+// Función para generar la tabla de libro y tema
+function generateLibroTemaTable(doc, registros) {
+  const tableTop = 250;
+  const itemHeight = 20;
+  const cellWidths = [50, 50, 50, 85, 30, 60, 60, 65, 30, 60];  // Anchos para las columnas
+
+  const totalTableWidth = cellWidths.reduce((a, b) => a + b, 0);
+  const leftMargin = (doc.page.width - totalTableWidth) / 2;
+
+  // Dibujar el encabezado de la tabla
+  doc.fontSize(12).fillColor('white').rect(leftMargin, tableTop, totalTableWidth, itemHeight).fill('#007bff');
+  const headers = ["Nombre", "Paterno", "Materno", "Tema", "Libro", "Dificultad", "Correctas", "Incorrectas", "Nota", "Estado"];
+  headers.forEach((header, i) => {
+      doc.fillColor('white').font('Helvetica-Bold').text(header, leftMargin + cellWidths.slice(0, i).reduce((a, b) => a + b, 0) + 5, tableTop + 5, { width: cellWidths[i], align: 'center' });
+  });
+
+  // Dibujar las filas de los registros
+  registros.forEach((registro, i) => {
+      const y = tableTop + (i + 1) * itemHeight;
+      if (i % 2 === 0) {
+          doc.fillColor('#f9f9f9').rect(leftMargin, y, totalTableWidth, itemHeight).fill();  // Alternar color en las filas
+      }
+
+      let xPosition = leftMargin;
+      doc.fillColor('#333333').font('Helvetica');
+
+      const incorrectas = registro.resultado.total - registro.resultado.correctas;
+      const estado = registro.resultado.nota >= 6 ? 'Aprobado' : 'Reprobado';
+
+      // Llenar cada columna con los datos correctos
+      doc.text(registro.resultado.nombre, xPosition + 5, y + 5, { width: cellWidths[0], align: 'center' });
+      xPosition += cellWidths[0];
+      doc.text(registro.resultado.apellido, xPosition + 5, y + 5, { width: cellWidths[1], align: 'center' });
+      xPosition += cellWidths[1];
+      doc.text(registro.resultado.apellido2 || '', xPosition + 5, y + 5, { width: cellWidths[2], align: 'center' });
+      xPosition += cellWidths[2];
+      doc.text(registro.examen.tema, xPosition + 5, y + 5, { width: cellWidths[3], align: 'center' });
+      xPosition += cellWidths[3];
+      doc.text(registro.examen.libro, xPosition + 5, y + 5, { width: cellWidths[4], align: 'center' });
+      xPosition += cellWidths[4];
+      doc.text(registro.examen.dificultad || 'N/A', xPosition + 5, y + 5, { width: cellWidths[5], align: 'center' });
+      xPosition += cellWidths[5];
+      doc.text(registro.resultado.correctas.toString(), xPosition + 5, y + 5, { width: cellWidths[6], align: 'center' });
+      xPosition += cellWidths[6];
+      doc.text(incorrectas.toString(), xPosition + 5, y + 5, { width: cellWidths[7], align: 'center' });
+      xPosition += cellWidths[7];
+      doc.text(registro.resultado.nota.toString(), xPosition + 5, y + 5, { width: cellWidths[8], align: 'center' });
+      xPosition += cellWidths[8];
+      doc.text(estado, xPosition + 5, y + 5, { width: cellWidths[9], align: 'center' });
+  });
+}
+
+
+// Ruta para obtener todos los estudiantes inscritos
+appExpress.get('/estudiantesInscritos', async (req, res) => {
+  try {
+    const estudiantes = await Estudiante.find(); // Obtener todos los estudiantes
+    res.json(estudiantes); // Devolver los estudiantes en formato JSON
+  } catch (error) {
+    console.error('Error al obtener los estudiantes inscritos:', error);
+    res.status(500).send('Error al obtener los estudiantes inscritos');
+  }
+});
+
+// Obtener estudiantes por nivel GRAFICO
+appExpress.get('/obtenerEstudiantesPorNivel', async (req, res) => {
+  try {
+      const basico = await Estudiante.countDocuments({ nivel: 'basico' });
+      const intermedio = await Estudiante.countDocuments({ nivel: 'intermedio' });
+      const avanzado = await Estudiante.countDocuments({ nivel: 'avanzado' });
+
+      res.json({ basico, intermedio, avanzado });
+  } catch (error) {
+      console.error('Error al obtener estudiantes por nivel:', error);
+      res.status(500).send('Error al obtener los datos');
+  }
+});
 
 // Ruta de inicio de sesion del Estudiante 
 appExpress.post('/loginEstudiante', async (req, res) => {
@@ -882,7 +1163,17 @@ appExpress.post('/loginEstudiante', async (req, res) => {
     if (!estudiante) {
       return res.status(401).json({ message: 'Credenciales incorrectas' });
     }
-    res.json({ message: 'Autenticación exitosa' });
+
+    // Devolver los datos del estudiante
+    res.json({
+      message: 'Autenticación exitosa',
+      estudiante: {
+        nombre: estudiante.nombre,
+        apellido: estudiante.apellido,
+        apellido2: estudiante.apellido2,
+        nivel: estudiante.nivel
+      }
+    });
 
   } catch (dbError) {
     console.error('Error al acceder a la base de datos:', dbError);
@@ -892,29 +1183,79 @@ appExpress.post('/loginEstudiante', async (req, res) => {
 
 // Nueva ruta para inicio de sesión en la aplicación móvil que devuelve nivel y token
 appExpress.post('/loginEstudianteToken', async (req, res) => {
-  const { email, telefono } = req.body;
+  const { email } = req.body;
 
   try {
-    console.log('Datos recibidos:', { email, telefono });  // Verifica los datos recibidos
-
-    const estudiante = await Estudiante.findOne({ email, telefono });
-    console.log('Estudiante encontrado:', estudiante);  // Verifica si encuentra al estudiante
+    const estudiante = await Estudiante.findOne({ email });
 
     if (!estudiante) {
-      console.log('Estudiante no encontrado, credenciales incorrectas');
       return res.status(401).json({ message: 'Credenciales incorrectas' });
     }
 
-    // Devolver el nivel y el token del examen asignado
+    if (estudiante.isLoggedIn) {
+      return res.status(403).json({ message: 'Ya tienes una sesión activa.' });
+    }
+
+    // Marcar al estudiante como conectado
+    estudiante.isLoggedIn = true;
+    await estudiante.save();
+
     res.json({
       message: 'Autenticación exitosa',
       nivel: estudiante.nivel,
-      token: estudiante.examenAsignado
+      token: 'GENERATE_YOUR_TOKEN_HERE', // puedes generar un token si es necesario
     });
 
-  } catch (dbError) {
-    console.error('Error al acceder a la base de datos:', dbError);
+  } catch (error) {
     res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+//Ruta para cerrar
+appExpress.post('/logoutEstudiante', async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const estudiante = await Estudiante.findOne({ email });
+
+    if (!estudiante) {
+      return res.status(400).json({ message: 'Estudiante no encontrado' });
+    }
+
+    // Marcar la sesión como cerrada
+    estudiante.isLoggedIn = false;
+    await estudiante.save();
+
+    res.json({ message: 'Sesión cerrada correctamente.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al cerrar sesión.' });
+  }
+});
+
+// obtener la cantidad de aprobados y reprobados GRAFICO
+appExpress.get('/resultadosAprobadosReprobados', async (req, res) => {
+  try {
+    // Obtener todos los resultados
+    const resultados = await Resultado.find();
+
+    // Contadores
+    let aprobados = 0;
+    let reprobados = 0;
+
+    // Contar los estudiantes aprobados y reprobados
+    resultados.forEach(resultado => {
+      if (resultado.nota >= 5.1) {
+        aprobados++;
+      } else {
+        reprobados++;
+      }
+    });
+
+    // Responder con la cantidad de aprobados y reprobados
+    res.json({ aprobados, reprobados });
+  } catch (error) {
+    console.error('Error al obtener los resultados:', error);
+    res.status(500).send('Error al obtener los resultados');
   }
 });
 
@@ -1243,7 +1584,7 @@ appExpress.delete('/seguimiento/:id', async (req, res) => {
   }
 });
 
-// Ruta del seguimiento al estudiante
+// Ruta del seguimiento al estudiante al ingresar al sistema
 appExpress.get('/seguimiento', async (req, res) => {
   try {
     const seguimiento = await Seguimiento.find();

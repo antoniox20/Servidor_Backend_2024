@@ -19,16 +19,16 @@ const preguntaSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  audio: {
-    type: String
-  },
   dificultad: {
     type: String,
     required: true
   },
-  fechaExamen: {  
-    type: Date,
-    default: Date.now  
+  libro: {
+    type: String,
+    required: true
+  },
+  audio: {
+    type: String
   }
 });
 

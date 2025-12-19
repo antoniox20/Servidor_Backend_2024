@@ -98,3 +98,13 @@ h2 {
     background-color: #d32f2f;
     border-color: #d32f2f;
 }
+
+.btn-group-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-group-actions .btn {
+    width: 100px;
+}

@@ -4,6 +4,10 @@ body {
     font-family: 'Roboto', sans-serif;
     color: #333;
     padding-bottom: 40px;
+    user-select: none; /* Deshabilita la selección de texto en todo el cuerpo */
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none;    /* Firefox */
+    -ms-user-select: none;     /* Internet Explorer/Edge */
 }
 
 .navbar {
@@ -104,6 +108,10 @@ body {
     margin-bottom: 30px;
     border-left: 8px solid #3498db;
     transition: transform 0.2s ease-in-out;
+    user-select: none; /* Deshabilita la selección de texto en las preguntas */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .pregunta-card:hover {
@@ -195,6 +203,10 @@ body {
     margin-top: 30px;
     text-align: left;
     font-size: 1.1em;
+    user-select: none; /* Deshabilita la selección de texto en los resultados */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 /* Corrección de respuestas */
@@ -206,6 +218,10 @@ body {
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     color: #000; /* Cambia el color del texto a negro */
+    user-select: none; /* Deshabilita la selección de texto en los detalles de corrección */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .detalle strong {
@@ -258,4 +274,40 @@ footer {
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
     position: relative;
     z-index: 1;
+}
+
+/* Estilo para las horas de inicio y fin en una sola línea */
+.hora-examen span {
+    display: inline-block;
+    margin-right: 10px; /* Espacio entre los elementos */
+}
+
+/* Estilo para la alerta (cuadro amarillo) */
+.alert-info {
+    display: inline-block;
+    font-size: 1.1em; /* Aumentar ligeramente el tamaño de fuente */
+    color: #2c3e50; /* Mantener el color del texto */
+    font-weight: normal;
+    background-color: #f1c40f; /* Fondo amarillo */
+    width: 100%; /* Cuadro completo */
+    padding: 25px; /* Aumentar el espacio interior */
+    border-radius: 10px; /* Esquinas redondeadas */
+    line-height: 1.6; /* Espacio entre líneas */
+}
+
+/* Ajustar los espacios entre los elementos */
+.alert-info span {
+    margin-right: 20px; /* Espacio más amplio entre elementos de texto */
+}
+
+/* Alinear ícono correctamente */
+.alert-info ion-icon {
+    vertical-align: middle;
+    margin-right: 10px; /* Aumentar espacio entre ícono y texto */
+}
+
+/* Aumentar espacio entre etiquetas y valores */
+.alert-info strong {
+    font-weight: bold; /* Mantener negrita en las etiquetas */
+    margin-right: 5px; /* Espacio entre etiquetas y valores */
 }

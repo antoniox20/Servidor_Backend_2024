@@ -31,11 +31,11 @@
                         <input type="text" class="form-control input-focus" id="nombre" name="nombre" required>
                     </div>
                     <div class="form-group col-md-6">
-                        <label for="apellido">Apellido:</label>
+                        <label for="apellido">Apellido Paterno:</label>
                         <input type="text" class="form-control input-focus" id="apellido" name="apellido" required>
                     </div>
                     <div class="form-group col-md-6">
-                        <label for="apellido2">Segundo Apellido:</label>
+                        <label for="apellido2">Apellido Materno:</label>
                         <input type="text" class="form-control input-focus" id="apellido2" name="apellido2" required>
                     </div>
                     <div class="form-group col-md-6">
@@ -44,7 +44,7 @@
                     </div>
                     <div class="form-group col-md-6">
                         <label for="email">Correo Electrónico:</label>
-                        <input type="email" class="form-control input-focus" id="email" name="email" required>
+                        <input type="email" class="form-control input-focus" id="email" name="email" required pattern=".+@gmail\.com" title="Por favor, introduce una dirección de Gmail que termine en .com">
                     </div>
                     <div class="form-group col-md-6">
                         <label for="telefono">Teléfono:</label>
@@ -52,11 +52,53 @@
                     </div>
                     <div class="form-group col-md-6">
                         <label for="nivel">Nivel de Inglés:</label>
-                        <select class="form-control" id="nivel" name="nivel" required>
-                            <option value="" disabled selected>Seleccione el nivel</option>
+                        <input type="hidden" id="nivel" name="nivel">
+                        <select class="form-control" id="nivel_display" disabled>
                             <option value="basico">Básico</option>
                             <option value="intermedio">Intermedio</option>
                             <option value="avanzado">Avanzado</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="libro"><i class="fas fa-book"></i> Libro</label>
+                        <select class="form-control" id="libro" name="libro" onchange="asignarNivel()" required>
+                            <option value="" disabled selected>Seleccione un libro</option>
+                                <option value="1">Libro 1</option>
+                                <option value="2">Libro 2</option>
+                                <option value="3">Libro 3</option>
+                                <option value="4">Libro 4</option>
+                                <option value="5">Libro 5</option>
+                                <option value="6">Libro 6</option>
+                                <option value="7">Libro 7</option>
+                                <option value="8">Libro 8</option>
+                                <option value="9">Libro 9</option>
+                                <option value="10">Libro 10</option>
+                                <option value="11">Libro 11</option>
+                                <option value="12">Libro 12</option>
+                                <option value="13">Libro 13</option>
+                                <option value="14">Libro 14</option>
+                                <option value="15">Libro 15</option>
+                                <option value="16">Libro 16</option>
+                                <option value="17">Libro 17</option>
+                                <option value="18">Libro 18</option>
+                                 <option value="19">Libro 19</option>
+                                <option value="20">Libro 20</option>
+                                <option value="21">Libro 21</option>
+                                <option value="22">Libro 22</option>
+                                <option value="23">Libro 23</option>
+                                <option value="24">Libro 24</option>
+                                <option value="25">Libro 25</option>
+                                <option value="26">Libro 26</option>
+                                <option value="27">Libro 27</option>
+                                <option value="28">Libro 28</option>
+                                <option value="29">Libro 29</option>
+                                <option value="30">Libro 30</option>
+                            <!-- Opciones de libros -->
+                            <script>
+                                for (let i = 1; i <= 30; i++) {
+                                    document.write(`<option value="${i}">Libro ${i}</option>`);
+                                }
+                            </script>
                         </select>
                     </div>
                 </div>
@@ -69,17 +111,17 @@
                 <thead>
                     <tr>
                         <th>Nombre</th>
-                        <th>Apellido</th>
-                        <th>Segundo Apellido</th>
+                        <th>Apellido Paterno</th>
+                        <th>Apellido Materno</th>
                         <th>Fecha de Nacimiento</th>
                         <th>Correo Electrónico</th>
                         <th>Teléfono</th>
-                        <th>Nivel</th> <!-- Nueva columna para el nivel -->
+                        <th>Nivel</th>
+                        <th>Libro</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
-                <tbody id="listaEstudiantes">
-                </tbody>
+                <tbody id="listaEstudiantes"></tbody>
             </table>
         </div>
     </main>
@@ -92,15 +134,37 @@
             window.location.href = 'index.html';
         }
 
+        function asignarNivel() {
+            const libroSeleccionado = document.getElementById('libro').value;
+            const nivel = document.getElementById('nivel');
+            const nivelDisplay = document.getElementById('nivel_display');
+            if (libroSeleccionado >= 1 && libroSeleccionado <= 9) {
+                nivel.value = 'basico';
+                nivelDisplay.value = 'basico';
+            } else if (libroSeleccionado >= 10 && libroSeleccionado <= 19) {
+                nivel.value = 'intermedio';
+                nivelDisplay.value = 'intermedio';
+            } else if (libroSeleccionado >= 20 && libroSeleccionado <= 30) {
+                nivel.value = 'avanzado';
+                nivelDisplay.value = 'avanzado';
+            }
+        }
+
         $(document).ready(function() {
-            // Establecer la fecha máxima para la fecha de nacimiento a cinco años atrás
             var hoy = new Date();
             var fechaMinimaAno = hoy.getFullYear() - 8;
             var fechaMaxima = new Date(fechaMinimaAno, 11, 31);
             var fechaMaximaString = fechaMaxima.toISOString().substring(0, 10);
             $('#fechaDeNacimiento').attr('max', fechaMaximaString);
 
-            // Cargar estudiantes al cargar la página
+            $('#nombre, #apellido, #apellido2').on('input', function() {
+                this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+            });
+
+            $('#telefono').on('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+
             cargarEstudiantes();
 
             function cargarEstudiantes() {
@@ -110,21 +174,21 @@
                     success: function(estudiantes) {
                         $('#listaEstudiantes').empty();
                         estudiantes.forEach(function(estudiante) {
-                            $('#listaEstudiantes').append(
-                                `<tr>
-                                    <td>${estudiante.nombre}</td>
-                                    <td>${estudiante.apellido}</td>
-                                    <td>${estudiante.apellido2}</td>
-                                    <td>${new Date(estudiante.fechaDeNacimiento).toLocaleDateString()}</td>
-                                    <td>${estudiante.email}</td>
-                                    <td>${estudiante.telefono}</td>
-                                    <td>${estudiante.nivel}</td>  <!-- Mostrar el nivel -->
-                                    <td>
-                                        <button class="btn btn-warning btn-sm editar-btn" data-id="${estudiante._id}">Editar</button>
-                                        <button class="btn btn-danger btn-sm eliminar-btn" data-id="${estudiante._id}">Eliminar</button>
-                                    </td>
-                                </tr>`
-                            );
+                            var fila = `<tr>
+                                            <td>${estudiante.nombre}</td>
+                                            <td>${estudiante.apellido}</td>
+                                            <td>${estudiante.apellido2}</td>
+                                            <td>${new Date(estudiante.fechaDeNacimiento).toLocaleDateString()}</td>
+                                            <td>${estudiante.email}</td>
+                                            <td>${estudiante.telefono}</td>
+                                            <td>${estudiante.nivel}</td>
+                                            <td>${estudiante.libro || 'No especificado'}</td>
+                                            <td>
+                                                <button class="btn btn-warning btn-sm editar-btn" data-id="${estudiante._id}">Editar</button>
+                                                <button class="btn btn-danger btn-sm eliminar-btn" data-id="${estudiante._id}">Eliminar</button>
+                                            </td>
+                                        </tr>`;
+                            $('#listaEstudiantes').append(fila);
                         });
                     },
                     error: function(error) {
@@ -140,7 +204,6 @@
                 var id = $('#estudianteId').val();
                 var method = id ? 'PUT' : 'POST';
                 var url = id ? 'http://localhost:3000/estudiantes/' + id : 'http://localhost:3000/registro';
-
                 $.ajax({
                     type: method,
                     url: url,
@@ -159,7 +222,6 @@
                 });
             });
 
-            // Funciones para editar y eliminar
             $(document).on('click', '.editar-btn', function() {
                 var id = $(this).data('id');
                 editarEstudiante(id);
@@ -183,6 +245,7 @@
                         $('#email').val(estudiante.email);
                         $('#telefono').val(estudiante.telefono);
                         $('#nivel').val(estudiante.nivel);  // Setear el valor de nivel
+                        $('#libro').val(estudiante.libro);  // Setear el valor de libro
                         $('button[type="submit"]').text('Actualizar');
                     },
                     error: function(error) {

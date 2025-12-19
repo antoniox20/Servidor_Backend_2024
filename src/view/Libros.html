@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro de Libros</title>
+  <!-- Enlace a Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Enlace a FontAwesome para los íconos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="./css/Libros.css">
+</head>
+
+<body>
+  <header class="bg-primary text-white py-3 mb-4">
+    <div class="container d-flex justify-content-between align-items-center">
+      <h1 class="h3 mb-0">Registro de Libros</h1>
+      <button class="btn btn-light" onclick="goBack()">
+        <i class="fas fa-arrow-left"></i> Volver
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card shadow-lg">
+          <div class="card-body">
+            <h2 class="h4 mb-4 text-center text-primary"><i class="fas fa-book"></i> Registrar Tema</h2>
+            <form id="libroForm">
+              <div class="mb-3">
+                <label for="tomo" class="form-label"><i class="fas fa-layer-group"></i> Tomo</label>
+                <select id="tomo" name="tomo" class="form-select" onchange="asignarNivel()" required>
+                  <option value="" disabled selected>Seleccione un libro</option>
+                  <option value="1">Libro 1</option>
+                    <option value="2">Libro 2</option>
+                    <option value="3">Libro 3</option>
+                    <option value="4">Libro 4</option>
+                    <option value="5">Libro 5</option>
+                    <option value="6">Libro 6</option>
+                    <option value="7">Libro 7</option>
+                    <option value="8">Libro 8</option>
+                    <option value="9">Libro 9</option>
+                    <option value="10">Libro 10</option>
+                    <option value="11">Libro 11</option>
+                    <option value="12">Libro 12</option>
+                    <option value="13">Libro 13</option>
+                    <option value="14">Libro 14</option>
+                    <option value="15">Libro 15</option>
+                    <option value="16">Libro 16</option>
+                    <option value="17">Libro 17</option>
+                    <option value="18">Libro 18</option>
+                    <option value="19">Libro 19</option>
+                    <option value="20">Libro 20</option>
+                    <option value="21">Libro 21</option>
+                    <option value="22">Libro 22</option>
+                    <option value="23">Libro 23</option>
+                    <option value="24">Libro 24</option>
+                    <option value="25">Libro 25</option>
+                    <option value="26">Libro 26</option>
+                    <option value="27">Libro 27</option>
+                    <option value="28">Libro 28</option>
+                    <option value="29">Libro 29</option>
+                    <option value="30">Libro 30</option>
+                  <!-- Opciones para los tomos del 1 al 30 -->
+
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label for="nivel" class="form-label"><i class="fas fa-signal"></i> Nivel</label>
+                <select id="nivel" name="nivel" class="form-select" disabled>
+                  <option value="basico">Básico</option>
+                  <option value="intermedio">Intermedio</option>
+                  <option value="avanzado">Avanzado</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label for="tema" class="form-label"><i class="fas fa-book-open"></i> Tema</label>
+                <input type="text" class="form-control" id="tema" name="tema" required placeholder="Introduce el tema">
+              </div>
+
+              <div class="d-grid">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-save"></i> Guardar
+                </button>
+                <button type="button" class="btn btn-warning mt-2" id="editarBtn" style="display: none;">Actualizar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mt-5">
+      <div class="col-md-8 offset-md-2">
+        <h2 class="h4 text-primary text-center"><i class="fas fa-list"></i> Lista de Libros</h2>
+
+          <!-- Campo de búsqueda exclusivo para libros -->
+    <div class="input-group mb-3">
+      <input type="text" id="filtroLibro" class="form-control" placeholder="Buscar por número de libro" onkeyup="filtrarLibrosPorNumero()" oninput="validarEntrada(event)">
+    </div>
+
+        <table class="table table-striped mt-3">
+          <thead class="thead-dark">
+            <tr>
+              <th>#</th>
+              <th>Libro</th>
+              <th>Nivel</th>
+              <th>Tema</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="listaLibros">
+            <!-- Libros serán cargados aquí -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <script>
+    let libroIdActual = null;
+
+    // Función para seleccionar automáticamente el nivel según el libro
+    function asignarNivel() {
+      const tomo = document.getElementById('tomo').value;
+      const nivel = document.getElementById('nivel');
+
+      if (tomo >= 1 && tomo <= 9) {
+        nivel.value = 'basico';
+      } else if (tomo >= 10 && tomo <= 19) {
+        nivel.value = 'intermedio';
+      } else if (tomo >= 20 && tomo <= 30) {
+        nivel.value = 'avanzado';
+      }
+    }
+
+    function goBack() {
+      window.location.href = 'index.html';
+    }
+
+    document.getElementById('libroForm').addEventListener('submit', async function (event) {
+      event.preventDefault();
+
+      const tomo = document.getElementById('tomo').value;
+      const nivel = document.getElementById('nivel').value;
+      const tema = document.getElementById('tema').value;
+
+      const libro = { tomo, nivel, tema };
+
+      try {
+        const response = await fetch(libroIdActual ? `http://localhost:3000/api/libros/${libroIdActual}` : 'http://localhost:3000/api/libros', {
+          method: libroIdActual ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(libro)
+        });
+
+        if (response.ok) {
+          alert(`Libro ${libroIdActual ? 'actualizado' : 'guardado'} exitosamente.`);
+          cargarLibros();
+          libroIdActual = null;
+          document.getElementById('libroForm').reset();
+          document.getElementById('editarBtn').style.display = 'none'; // Ocultar botón de actualización
+        } else {
+          alert('Error al guardar el libro.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error al guardar el libro.');
+      }
+    });
+
+    function filtrarLibrosPorNumero() {
+  const filtro = document.getElementById('filtroLibro').value; // Tomar el valor exacto ingresado
+  const filas = document.querySelectorAll('#listaLibros tr');
+
+  filas.forEach(fila => {
+    const libro = fila.querySelector('td:nth-child(2)').textContent; // Tomo
+    if (libro === filtro || filtro === "") {  // Comparar por coincidencia exacta
+      fila.style.display = '';
+    } else {
+      fila.style.display = 'none';
+    }
+  });
+}
+
+// Validar que solo se ingresen números mayores a 0
+function validarEntrada(event) {
+  const input = event.target;
+  // Eliminar todo lo que no sea un número positivo
+  input.value = input.value.replace(/[^0-9]/g, ''); 
+
+  // Bloquear si el número es 0
+  if (input.value !== '' && parseInt(input.value) === 0) {
+    input.value = '';
+    alert("El número debe ser mayor a 0.");
+  }
+}
+
+    // Función para cargar libros y mostrarlos en la tabla
+    function cargarLibros() {
+      $.ajax({
+        type: 'GET',
+        url: 'http://localhost:3000/api/libros',
+        success: function (libros) {
+          $('#listaLibros').empty();
+          libros.forEach(function (libro, index) {
+            var fila = `<tr>
+                          <td>${index + 1}</td>
+                          <td>${libro.tomo}</td>
+                          <td>${libro.nivel}</td>
+                          <td>${libro.tema}</td>
+                          <td>
+                            <button class="btn btn-warning btn-sm editar-btn" data-id="${libro._id}">Editar</button>
+                            <button class="btn btn-danger btn-sm eliminar-btn" data-id="${libro._id}">Eliminar</button>
+                          </td>
+                        </tr>`;
+            $('#listaLibros').append(fila);
+          });
+        },
+        error: function (error) {
+          console.error('Error al cargar la lista de libros:', error);
+          alert('Error al cargar la lista de libros');
+        }
+      });
+    }
+
+    // Función para eliminar libro
+    $(document).on('click', '.eliminar-btn', async function () {
+      const libroId = $(this).data('id');
+      if (confirm('¿Estás seguro de que deseas eliminar este libro?')) {
+        try {
+          const response = await fetch(`http://localhost:3000/api/libros/${libroId}`, {
+            method: 'DELETE'
+          });
+
+          if (response.ok) {
+            alert('Libro eliminado exitosamente.');
+            cargarLibros();
+          } else {
+            alert('Error al eliminar el libro.');
+          }
+        } catch (error) {
+          console.error('Error al eliminar el libro:', error);
+          alert('Error al eliminar el libro.');
+        }
+      }
+    });
+
+    // Función para editar libro
+    $(document).on('click', '.editar-btn', function () {
+      libroIdActual = $(this).data('id');
+      $.get(`http://localhost:3000/api/libros/${libroIdActual}`, function (libro) {
+        $('#tomo').val(libro.tomo);
+        $('#nivel').val(libro.nivel);
+        $('#tema').val(libro.tema);
+        asignarNivel(); // Asignar nivel basado en el tomo seleccionado
+        document.getElementById('editarBtn').style.display = 'block'; // Mostrar botón de actualizar
+      });
+    });
+
+    // Cargar libros al cargar la página
+    $(document).ready(function () {
+      cargarLibros();
+    });
+  </script>
+</body>
+
+</html>

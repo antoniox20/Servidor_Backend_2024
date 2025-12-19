@@ -1,0 +1,83 @@
+Date : 2024-09-05 12:45:09
+Directory : c:\Users\LENOVO\Desktop\Proyecto_Evaluacion
+Total : 48 files,  19870 codes, 199 comments, 806 blanks, all 20875 lines
+
+Languages
++------------+------------+------------+------------+------------+------------+
+| language   | files      | code       | comment    | blank      | total      |
++------------+------------+------------+------------+------------+------------+
+| JSON       |          3 |     13,336 |          0 |          4 |     13,340 |
+| JavaScript |         19 |      2,575 |        121 |        341 |      3,037 |
+| HTML       |         13 |      2,410 |         40 |        175 |      2,625 |
+| CSS        |         13 |      1,549 |         38 |        286 |      1,873 |
++------------+------------+------------+------------+------------+------------+
+
+Directories
++----------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                             | files      | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                |         48 |     19,870 |        199 |        806 |     20,875 |
+| . (Files)                                                                        |          5 |     13,346 |          0 |          5 |     13,351 |
+| src                                                                              |         43 |      6,524 |        199 |        801 |      7,524 |
+| src (Files)                                                                      |          8 |      2,333 |        118 |        298 |      2,749 |
+| src\Entidades                                                                    |          6 |        163 |          1 |         25 |        189 |
+| src\__test__                                                                     |          3 |         69 |          2 |         17 |         88 |
+| src\view                                                                         |         26 |      3,959 |         78 |        461 |      4,498 |
+| src\view (Files)                                                                 |         13 |      2,410 |         40 |        175 |      2,625 |
+| src\view\css                                                                     |         13 |      1,549 |         38 |        286 |      1,873 |
++----------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++----------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| filename                                                                         | language   | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\babel.config.js                      | JavaScript |          5 |          0 |          0 |          5 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\capacitor.config.json                | JSON       |          6 |          0 |          2 |          8 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\jest.config.js                       | JavaScript |          5 |          0 |          1 |          6 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\package-lock.json                    | JSON       |     13,274 |          0 |          1 |     13,275 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\package.json                         | JSON       |         56 |          0 |          1 |         57 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\Backend.js                       | JavaScript |        309 |         18 |         57 |        384 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\Entidades\Estudiantes.js         | JavaScript |         34 |          0 |          4 |         38 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\Entidades\Examen.js              | JavaScript |         23 |          0 |          3 |         26 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\Entidades\Preguntas.js           | JavaScript |         34 |          0 |          4 |         38 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\Entidades\Resultados.js          | JavaScript |         38 |          1 |          4 |         43 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\Entidades\Seguimiento.js         | JavaScript |          9 |          0 |          3 |         12 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\Entidades\Usuario.js             | JavaScript |         25 |          0 |          7 |         32 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\GeneracionToken.js               | JavaScript |         29 |          0 |          5 |         34 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\Generarllavesecreta.js           | JavaScript |          3 |          0 |          1 |          4 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\VerificarToken.js                | JavaScript |         27 |          8 |         12 |         47 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\__test__\generaciontoken.test.js | JavaScript |         26 |          1 |          5 |         32 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\__test__\test-port.js            | JavaScript |          6 |          1 |          2 |          9 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\__test__\verificarToken.test.js  | JavaScript |         37 |          0 |         10 |         47 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\generacion.js                    | JavaScript |        867 |          7 |         24 |        898 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\index.js                         | JavaScript |      1,064 |         83 |        192 |      1,339 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\init_db.js                       | JavaScript |         26 |          2 |          5 |         33 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\preload.js                       | JavaScript |          8 |          0 |          2 |         10 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\AsignacionExamen.html       | HTML       |        158 |          3 |         12 |        173 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\Estudiante.html             | HTML       |        153 |          5 |         11 |        169 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\ExamenGenerado.html         | HTML       |        203 |          1 |         30 |        234 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\Examenes.html               | HTML       |        209 |          1 |          7 |        217 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\Login.html                  | HTML       |        135 |          6 |         10 |        151 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\Notas.html                  | HTML       |        108 |          1 |          8 |        117 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\Preguntas.html              | HTML       |        252 |          1 |         17 |        270 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\Reporte.html                | HTML       |        519 |          9 |         35 |        563 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\Seguimiento.html            | HTML       |         84 |          2 |          8 |         94 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\configuracion.html          | HTML       |        171 |          5 |         10 |        186 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\css\asignacion_examen.css   | CSS        |        150 |         12 |         30 |        192 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\css\configuracion.css       | CSS        |        141 |          0 |         28 |        169 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\css\estilos.css             | CSS        |        206 |          4 |         31 |        241 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\css\estilos2.css            | CSS        |        104 |          0 |         18 |        122 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\css\estudiante.css          | CSS        |        157 |          0 |         30 |        187 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\css\examen.css              | CSS        |         74 |          4 |         15 |         93 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\css\examengenerado.css      | CSS        |        238 |          7 |         33 |        278 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\css\notas.css               | CSS        |         59 |          0 |         13 |         72 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\css\preguntas.css           | CSS        |         82 |          0 |         19 |        101 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\css\reporte.css             | CSS        |         35 |          0 |          9 |         44 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\css\restaurar.css           | CSS        |         47 |          0 |         11 |         58 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\css\seguimiento.css         | CSS        |         90 |          8 |         15 |        113 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\css\usuario.css             | CSS        |        166 |          3 |         34 |        203 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\index.html                  | HTML       |        119 |          1 |          9 |        129 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\olvidar_contraseña.html     | HTML       |         91 |          3 |          6 |        100 |
+| c:\Users\LENOVO\Desktop\Proyecto_Evaluacion\src\view\usuarios.html               | HTML       |        208 |          2 |         12 |        222 |
+| Total                                                                            |            |     19,870 |        199 |        806 |     20,875 |
++----------------------------------------------------------------------------------+------------+------------+------------+------------+------------+

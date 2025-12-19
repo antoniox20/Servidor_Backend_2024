@@ -2,31 +2,13 @@ const crypto = require('crypto');
 
 const { generarTokenPersonalizado, generarPalabrasClave } = require('./GeneracionToken');
 
-// Función para determinar la dificultad según el libro seleccionado
-const determinarDificultadPorLibro = (libro) => {
-    if (libro >= 1 && libro <= 9) {
-        return 'facil'; // Nivel básico
-    } else if (libro >= 10 && libro <= 19) {
-        return 'medio'; // Nivel intermedio
-    } else if (libro >= 20 && libro <= 30) {
-        return 'dificil'; // Nivel avanzado
-    }
-    return null; // Caso de error si el libro no está en el rango adecuado
-};
-
-const GenerarExamen = (tema, tiposPreguntas, numeroOpciones, libro) => {
-    // Determinar dificultad automáticamente según el libro
-    const dificultad = determinarDificultadPorLibro(libro);
-
-    if (!dificultad) {
-        throw new Error('Libro fuera del rango permitido para determinar la dificultad.');
-    }
-
+const GenerarExamen = (tema, tiposPreguntas, numeroOpciones, dificultad) => {
     console.log('Generando preguntas con los siguientes parámetros:', { tema, tiposPreguntas, numeroOpciones, dificultad });
 
     const preguntas = [];
     const tipos = Array.isArray(tiposPreguntas) ? tiposPreguntas : tiposPreguntas.split(',');
 
+    // Función para asegurar que la respuesta correcta siempre esté incluida
     const incluirRespuestaCorrecta = (opciones, respuestaCorrecta, numeroOpciones) => {
         const allOptions = [respuestaCorrecta, ...opciones.filter(op => op !== respuestaCorrecta)];
         const shuffledOptions = shuffleArray(allOptions).slice(0, numeroOpciones);
@@ -37,6 +19,7 @@ const GenerarExamen = (tema, tiposPreguntas, numeroOpciones, libro) => {
         return shuffleArray(shuffledOptions);
     };
 
+    // Definición de preguntas por nivel
     const preguntasNivelBasico = [
         {
             pregunta: `What is the correct form of the verb in this sentence? I ______ (to go) to school every day.`,
@@ -138,7 +121,6 @@ const GenerarExamen = (tema, tiposPreguntas, numeroOpciones, libro) => {
             opciones: ["Apple", "Table", "Elephant", "Chair", "Car"],
             respuestaCorrecta: "Elephant"
         }
-        
     ];
 
     const preguntasNivelIntermedio = [
@@ -655,7 +637,8 @@ const GenerarExamen = (tema, tiposPreguntas, numeroOpciones, libro) => {
             respuestaCorrecta: "True"
         }
     ];
-
+    
+    //Preguntas Linstening
     const preguntasListeningBasico = [
         {
             pregunta: `Listen to the audio and select the correct answer.`,
@@ -783,7 +766,7 @@ const GenerarExamen = (tema, tiposPreguntas, numeroOpciones, libro) => {
     ];
 
     const preguntasListeningAvanzado = [
-       {
+        {
             pregunta: `Listen to the audio and select the correct answer.`,
             audio: "./audios/audio_avanzado1.mp3",
             opciones: ["The meeting is at 3 PM", "The meeting is at 4 PM", "The meeting is at 5 PM", "The meeting is at 7 PM", "The meeting is at 6 PM"],
@@ -866,29 +849,31 @@ const GenerarExamen = (tema, tiposPreguntas, numeroOpciones, libro) => {
         return todasLasPreguntas[dificultad][tipo] || [];
     };
 
+    // función para obtener 5 preguntas al azar
     const seleccionarPreguntasAleatorias = (preguntas, cantidad) => {
-        const shuffled = shuffleArray(preguntas); // Mezclamos el array de preguntas
-        return shuffled.slice(0, cantidad); // Seleccionamos 5
-    };
+    const shuffled = shuffleArray(preguntas); // Mezclamos el array de preguntas
+    return shuffled.slice(0, cantidad); // Seleccionamos  5
+};
 
-    tipos.forEach(tipoPregunta => {
-        const basePreguntas = obtenerPreguntasPorDificultadYTipo(dificultad, tipoPregunta);
+tipos.forEach(tipoPregunta => {
+    const basePreguntas = obtenerPreguntasPorDificultadYTipo(dificultad, tipoPregunta);
 
-        const preguntasSeleccionadas = seleccionarPreguntasAleatorias(basePreguntas, 5);
+    // Seleccionamos 5 preguntas aleatorias de cada nivel
+    const preguntasSeleccionadas = seleccionarPreguntasAleatorias(basePreguntas, 5);
 
-        preguntasSeleccionadas.forEach(baseQuestion => {
-            let question = { ...baseQuestion };
+    preguntasSeleccionadas.forEach(baseQuestion => {
+        let question = { ...baseQuestion };
 
-            if (tipoPregunta === 'opcionMultiple' || tipoPregunta === 'listening') {
-                question.opciones = incluirRespuestaCorrecta(baseQuestion.opciones, baseQuestion.respuestaCorrecta, numeroOpciones);
-            } else if (tipoPregunta === 'verdaderoFalso') {
-                question.opciones = ["True", "False"];
-            }
+        if (tipoPregunta === 'opcionMultiple' || tipoPregunta === 'listening') {
+            question.opciones = incluirRespuestaCorrecta(baseQuestion.opciones, baseQuestion.respuestaCorrecta, numeroOpciones);
+        } else if (tipoPregunta === 'verdaderoFalso') {
+            question.opciones = ["True", "False"];
+        }
 
-            preguntas.push(question);
-        });
+        preguntas.push(question);
     });
-
+});
+    
     const palabrasClave = generarPalabrasClave(5);
     const { token, creationTime, expiresAt, ttlMinutes } = generarTokenPersonalizado(palabrasClave);
     console.log('Preguntas generadas:', preguntas);

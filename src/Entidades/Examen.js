@@ -6,20 +6,21 @@ const ExamenSchema = new mongoose.Schema({
   tema: { type: String, required: true },
   libro: { type: String, required: true },
   tipo: { type: String, required: true },
-  incluyeImagenes: { type: Boolean, default: false },
   preguntas: [
     {
       pregunta: { type: String, required: true },
       opciones: [{ type: String, required: true }],
       respuestaCorrecta: { type: String, required: true },
-      audioUrl: { type: String }
+      //audioUrl: { type: String }
     }
   ],
   dificultad: { type: String, required: true },
   fechaCreacion: { type: Date, default: Date.now },
   token: { type: String, required: true },
   contenidoHTML: { type: String, required: true },
-  tiempo: { type: Number, required: true } 
+  tiempo: { type: Number, required: true },
+  horaInicio: { type: Date, required: true },
+  horaFin: { type: Date, required: true }  // Campo agregado
 });
 
 module.exports = mongoose.model('Examen', ExamenSchema);
